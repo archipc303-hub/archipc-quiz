@@ -88,36 +88,36 @@
         ]
       },
       q_budget: {
-        title: "如果準備換新電腦，你最看重哪一點？",
-        options: [
-          { text: "💎 外觀最重要！想組一台超美的海景房", next: 'analyzing', effects: { a: 5 } },
-          { text: "⚖️ CP值最高！錢要花在刀口上", next: 'analyzing', effects: { p: 2, s: 2 } },
-          { text: "🚀 效能全滿！預算不是問題，我要最強的", next: 'analyzing', effects: { p: 5 } },
-          { text: "🛡️ 絕對穩定！工作不能中斷，當機讓我崩潰", next: 'analyzing', effects: { s: 6 }, pain: "無預警死機與工作中斷" }
-        ]
-      }
-    };
+      title: "如果準備換新電腦，你最看重哪一點？",
+      options: [
+        { text: "💎 外觀最重要！想組一台超美的海景房", next: 'analyzing', effects: { a: 5 } },
+        { text: "⚖️ CP值最高！錢要花在刀口上", next: 'analyzing', effects: { p: 2, s: 2 } },
+        { text: "🚀 效能全滿！預算不是問題，我要最強的", next: 'analyzing', effects: { p: 5 } },
+        { text: "🛡️ 絕對穩定！工作不能中斷，當機讓我崩潰", next: 'analyzing', effects: { s: 6 }, pain: "無預警死機與工作中斷" }
+      ]
+    }
+  };
 
-    // --- 本地圖片元件 (加上友善防呆與預設文字) ---
-    const LocalImageAvatar = ({ imageUrl, altText }) => {
-      return (
-        <div className="relative w-full max-w-[280px] aspect-square mx-auto my-6 flex items-center justify-center">
-          <div className="absolute inset-0 rounded-full bg-white/5 blur-3xl"></div>
-          <img 
-            src={imageUrl} 
-            alt={altText} 
-            className="relative z-10 w-full h-full object-contain drop-shadow-2xl transform hover:scale-105 transition-transform duration-500"
-            onError={(e) => {
-              e.target.onerror = null; 
-              // 如果圖片路徑有誤或還沒放進資料夾，會顯示這個暫代畫面
-              e.target.src = "https://via.placeholder.com/280x280/1e293b/ffffff?text=Image+Not+Found\n(Please+add+to+/images)";
-            }}
-          />
-        </div>
-      );
-    };
+  // --- 本地圖片元件 (修正防呆網址，確保找不到圖時至少會顯示佔位圖) ---
+  const LocalImageAvatar = ({ imageUrl, altText }) => {
+    return (
+      <div className="relative w-full max-w-[280px] aspect-square mx-auto my-6 flex items-center justify-center bg-slate-800/30 rounded-3xl overflow-hidden border border-slate-700/50 shadow-inner">
+        <div className="absolute inset-0 rounded-full bg-white/5 blur-3xl"></div>
+        <img 
+          src={imageUrl} 
+          alt={altText} 
+          className="relative z-10 w-full h-full object-contain drop-shadow-2xl transform hover:scale-105 transition-transform duration-500"
+          onError={(e) => {
+            e.target.onerror = null; 
+            // 換成更穩定的佔位圖服務，確保找不到圖時會顯示明確的框框
+            e.target.src = "https://placehold.co/280x280/1e293b/94a3b8?text=Image\\nNot+Found";
+          }}
+        />
+      </div>
+    );
+  };
 
-    const ParticlesBackground = () => (
+  const ParticlesBackground = () => (
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
         {[...Array(20)].map((_, i) => (
           <div 
@@ -249,85 +249,85 @@
       };
 
       const getResultData = () => {
-        const { p, s, a } = scores;
+      const { p, s, a } = scores;
 
-        if (p >= 10 && s >= 5) {
-          return {
-            typeCode: "X-DEV (全能極客)",
-            imageUrl: "./images/x-dev.jpg",
-            title: "無所不能的【全能開發者】", subtitle: "多螢幕多開是日常，運算極限才是你的起點。",
+      if (p >= 10 && s >= 5) {
+        return {
+          typeCode: "X-DEV (全能極客)",
+          imageUrl: "images/x-dev.jpg",
+          title: "無所不能的【全能開發者】", subtitle: "多螢幕多開是日常，運算極限才是你的起點。",
             titleColor: "from-purple-400 to-fuchsia-500", badgeBg: "bg-purple-500/20 text-purple-400 border-purple-500/30",
             desc: "你的電腦使用習慣超狂！同時打遊戲、剪片又開一堆網頁。普通電腦一定會崩潰，你需要的是一台效能直接拉滿、散熱最強的「怪物級神機」！",
             keyword: "極客專屬", compatibility: { mate: "效能硬核玩家", conflict: "桌面美學大師" }
           };
         } else if (p >= 6 && s >= 5) {
-          return {
-            typeCode: "C-PRO (專業創作者)",
-            imageUrl: "./images/c-pro.jpg",
-            title: "靈感無限的【頂級創作者】", subtitle: "算圖不卡頓，靈感不中斷，時間是你的魔法。",
+        return {
+          typeCode: "C-PRO (專業創作者)",
+          imageUrl: "images/c-pro.jpg",
+          title: "靈感無限的【頂級創作者】", subtitle: "算圖不卡頓，靈感不中斷，時間是你的魔法。",
             titleColor: "from-slate-300 to-slate-400", badgeBg: "bg-slate-500/20 text-slate-300 border-slate-500/30",
             desc: "你常常需要剪輯大檔案或做設計。「算圖絕對不能卡」跟「絕對不能當機」是你的底線。你需要一台記憶體夠大、處理器超強的創作神機！",
             keyword: "創作者升級", compatibility: { mate: "企業領袖", conflict: "休閒電玩咖" }
           };
         } else if (s >= 6) {
-          return {
-            typeCode: "B-PRO (企業領袖)",
-            imageUrl: "./images/b-pro.jpg",
-            title: "時間就是金錢的【企業領袖】", subtitle: "你的電腦當機一小時，可能就是幾萬塊的損失。",
+        return {
+          typeCode: "B-PRO (企業領袖)",
+          imageUrl: "images/b-pro.jpg",
+          title: "時間就是金錢的【企業領袖】", subtitle: "你的電腦當機一小時，可能就是幾萬塊的損失。",
             titleColor: "from-sky-400 to-blue-500", badgeBg: "bg-blue-500/20 text-blue-400 border-blue-500/30",
             desc: "對你來說，時間就是金錢，電腦當機一秒都會讓你抓狂！你不追求花俏的功能，你需要的是一台「絕對穩定、永遠不出包」的可靠工作站。",
             keyword: "企業診斷", compatibility: { mate: "專業創作者", conflict: "務實精算師" }
           };
         } else if (p >= 10 && a >= 5) {
-          return {
-            typeCode: "S-STAR (魅影實況主)",
-            imageUrl: "./images/s-star.jpg",
-            title: "閃耀全場的【魅影實況主】", subtitle: "遊戲要打得帥，主機也要顏值爆表！",
+        return {
+          typeCode: "S-STAR (魅影實況主)",
+          imageUrl: "images/s-star.jpg",
+          title: "閃耀全場的【魅影實況主】", subtitle: "遊戲要打得帥，主機也要顏值爆表！",
             titleColor: "from-amber-400 to-yellow-500", badgeBg: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
             desc: "你不僅追求遊戲要順，主機更要長得超好看！你喜歡閃亮的燈效和透明的玻璃機殼。你需要一台就算邊開實況邊打遊戲，也絕對不卡的美型神機。",
             keyword: "海景房頂配", compatibility: { mate: "桌面美學大師", conflict: "數位游牧者" }
           };
         } else if (p >= 8) {
-          return {
-            typeCode: "P-ULT (效能硬核玩家)",
-            imageUrl: "./images/p-ult.jpg",
-            title: "絕不妥協的【效能硬核玩家】", subtitle: "你對幀數與畫質的渴望，不允許任何硬體拖後腿。",
+        return {
+          typeCode: "P-ULT (效能硬核玩家)",
+          imageUrl: "images/p-ult.jpg",
+          title: "絕不妥協的【效能硬核玩家】", subtitle: "你對幀數與畫質的渴望，不允許任何硬體拖後腿。",
             titleColor: "from-fuchsia-400 to-purple-500", badgeBg: "bg-purple-500/20 text-purple-400 border-purple-500/30",
             desc: "你打遊戲就是追求最順的畫面和最高的幀數！你最怕花大錢卻買到不適合的零件導致遊戲卡頓。你需要最精準的搭配，把每一分錢都變成遊戲裡的流暢度！",
             keyword: "效能健檢", compatibility: { mate: "全能極客", conflict: "數位游牧者" }
           };
         } else if (a >= 6) {
-          return {
-            typeCode: "V-MAX (桌面美學大師)",
-            imageUrl: "./images/v-max.jpg",
-            title: "品味至上的【桌面美學大師】", subtitle: "拒絕效能浪費！外觀顏值與實用才是王道。",
+        return {
+          typeCode: "V-MAX (桌面美學大師)",
+          imageUrl: "images/v-max.jpg",
+          title: "品味至上的【桌面美學大師】", subtitle: "拒絕效能浪費！外觀顏值與實用才是王道。",
             titleColor: "from-emerald-400 to-teal-500", badgeBg: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
             desc: "你認為電腦不只要好用，更要是桌上的藝術品！你不需要買用不到的過剩效能，把預算拿來挑一個超美的機殼、把線理得乾乾淨淨，才是你的作風。",
             keyword: "海景房配置", compatibility: { mate: "魅影實況主", conflict: "全能極客" }
           };
         } else if (p >= 4 && p < 8) {
-          return {
-            typeCode: "G-CAS (休閒電玩咖)",
-            imageUrl: "./images/g-cas.jpg",
-            title: "享受樂趣的【休閒電玩咖】", subtitle: "不用追求極限畫質，跟朋友連線順暢最重要。",
+        return {
+          typeCode: "G-CAS (休閒電玩咖)",
+          imageUrl: "images/g-cas.jpg",
+          title: "享受樂趣的【休閒電玩咖】", subtitle: "不用追求極限畫質，跟朋友連線順暢最重要。",
             titleColor: "from-yellow-300 to-amber-400", badgeBg: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
             desc: "你玩遊戲是為了開心跟朋友同樂！不用花大錢追求什麼頂級畫質，只要能順順打幾場 LOL 或特戰英豪不卡頓，這台電腦對你來說就滿分了！",
             keyword: "主流電競主機", compatibility: { mate: "務實精算師", conflict: "專業創作者" }
           };
         } else if (s <= 4 && p <= 3 && a < 5) {
-          return {
-            typeCode: "W-LITE (數位游牧者)",
-            imageUrl: "./images/w-lite.jpg",
-            title: "輕巧自在的【數位游牧者】", subtitle: "簡約、安靜、順暢，生活與工作的完美平衡。",
+        return {
+          typeCode: "W-LITE (數位游牧者)",
+          imageUrl: "images/w-lite.jpg",
+          title: "輕巧自在的【數位游牧者】", subtitle: "簡約、安靜、順暢，生活與工作的完美平衡。",
             titleColor: "from-teal-300 to-emerald-400", badgeBg: "bg-teal-500/20 text-teal-400 border-teal-500/30",
             desc: "你平常只用電腦上網、打報告或看影片。你不喜歡會發光、又大又吵的電競主機。一台安靜、省空間又耐看的小電腦，最適合你的簡單生活。",
             keyword: "極簡文書主機", compatibility: { mate: "務實精算師", conflict: "效能硬核玩家" }
           };
         } else {
-          return {
-            typeCode: "E-OPT (務實精算師)",
-            imageUrl: "./images/e-opt.jpg",
-            title: "把錢花在刀口上的【務實精算師】", subtitle: "我不買最貴的，我只買最適合我的！",
+        return {
+          typeCode: "E-OPT (務實精算師)",
+          imageUrl: "images/e-opt.jpg",
+          title: "把錢花在刀口上的【務實精算師】", subtitle: "我不買最貴的，我只買最適合我的！",
             titleColor: "from-blue-300 to-sky-400", badgeBg: "bg-blue-500/20 text-blue-400 border-blue-500/30",
             desc: "你買東西超級理性，絕對不花冤枉錢！你不追求最貴的規格，也不要浮誇的外表，你只想找到「效能剛好夠用、價格最划算」的完美平衡點。",
             keyword: "高CP值配置", compatibility: { mate: "數位游牧者", conflict: "企業領袖" }
