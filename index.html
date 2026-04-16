@@ -177,13 +177,13 @@
           setTimeout(() => {
             setModalContent(null);
             // ⚠️ 記得在這裡替換成您真實的 IG / LINE 連結 ⚠️
-            if (platform === 'line') window.open("https://line.me/R/ti/p/@your_line_id", "_blank");
-            else window.open("https://ig.me/m/archipc_tw", "_blank"); 
+            if (platform === 'line') window.open("這裡貼上你們的 LINE 連結", "_blank");
+            else window.open("這裡貼上你們的 IG 私訊連結", "_blank"); 
           }, 3000);
 
         } catch (err) {
-          if (platform === 'line') window.open("https://line.me/R/ti/p/@your_line_id", "_blank");
-          else window.open("https://ig.me/m/archipc_tw", "_blank");
+          if (platform === 'line') window.open("這裡貼上你們的 LINE 連結", "_blank");
+          else window.open("這裡貼上你們的 IG 私訊連結", "_blank");
         }
       };
 
@@ -496,39 +496,39 @@
                       </div>
                       
                       <div className="flex flex-col gap-3 relative z-10">
-                        <button 
-                          onClick={() => handleRedirect('line', result.title, result.keyword)}
-                          className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#06C755] hover:bg-[#05a546] text-white font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(6,199,85,0.4)]"
-                        >
-                          <Icon name="MessageCircle" className="w-5 h-5" />
-                          透過 LINE 領取配置單
-                        </button>
-                        
-                        <button 
-                          onClick={() => handleRedirect('ig', result.title, result.keyword)}
-                          className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-md"
-                        >
-                          <Icon name="Instagram" className="w-5 h-5" />
-                          透過 IG 私訊領取
-                        </button>
-                      </div>
+                      <button 
+                        onClick={() => handleRedirect('line', result.title, result.keyword)}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#06C755] hover:bg-[#05a546] text-white font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(6,199,85,0.4)]"
+                      >
+                        <Icon name="MessageCircle" className="w-5 h-5" />
+                        透過 LINE 領取配置單
+                      </button>
+                      
+                      <button 
+                        onClick={() => handleRedirect('ig', result.title, result.keyword)}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-md"
+                      >
+                        <Icon name="Instagram" className="w-5 h-5" />
+                        透過 IG 私訊領取
+                      </button>
                     </div>
-
-                    <button 
-                      onClick={() => handleShare(`【ARCHI PC 核心診斷】我的專屬科技人格是「${result.typeCode}」！\n${result.subtitle}\n你也來算算最適合你的電腦配置吧！`)}
-                      className="w-full flex items-center justify-center gap-2 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-colors border border-slate-700 text-sm font-medium"
-                    >
-                      <Icon name="Share2" className="w-4 h-4" />
-                      {showCopied ? "已複製結果！" : "複製結果並分享"}
-                    </button>
                   </div>
-                );
-              })()}
 
-            </div>
+                  <button 
+                    onClick={() => handleShare(`【ARCHI PC 核心診斷】我的專屬科技人格是「${result.typeCode}」！\n${result.subtitle}\n你也來算算最適合你的電腦配置吧！\n👉 測驗連結：https://archipc303-hub.github.io/archipc-quiz`)}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-colors border border-slate-700 text-sm font-medium"
+                  >
+                    <Icon name="Share2" className="w-4 h-4" />
+                    {showCopied ? "已複製結果！" : "複製結果並分享"}
+                  </button>
+                </div>
+              );
+            })()}
+
           </div>
+        </div>
 
-          {step === 'result' && (
+        {step === 'result' && (
             <button 
               onClick={handleStart}
               className="fixed bottom-6 right-6 md:bottom-8 md:right-8 bg-slate-800/90 backdrop-blur-md border border-slate-600 shadow-2xl text-white px-5 py-3 rounded-full flex items-center justify-center hover:bg-slate-700 hover:scale-105 transition-all z-50 font-bold"
