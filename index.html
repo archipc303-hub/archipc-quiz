@@ -157,6 +157,11 @@
       const [modalContent, setModalContent] = useState(null);
 
       const handleRedirect = async (platform, title, keyword) => {
+        // 👇 ⚠️ 請在這裡統一填寫你們的真實客服連結 ⚠️ 👇
+        const LINE_LINK = "這裡貼上你們的 LINE 連結"; // 日後有 LINE 官方帳號時可在此替換
+        const IG_LINK = "https://ig.me/m/archi.pc_official"; // ✅ 已為您更新為專屬 IG 帳號
+        // 👆 ============================================ 👆
+
         const ticketId = Math.floor(1000 + Math.random() * 9000);
         const shortPain = userPainPoint ? userPainPoint.substring(0,2) : "無";
         const sysCode = `${title.substring(0,4)}-P${scores.p}S${scores.s}A${scores.a}-${shortPain}`;
@@ -177,13 +182,13 @@
           
           setTimeout(() => {
             setModalContent(null);
-            if (platform === 'line') window.open("這裡貼上你們的 LINE 連結", "_blank");
-            else window.open("這裡貼上你們的 IG 私訊連結", "_blank"); 
+            if (platform === 'line') window.open(LINE_LINK, "_blank");
+            else window.open(IG_LINK, "_blank"); 
           }, 3000);
 
         } catch (err) {
-          if (platform === 'line') window.open("這裡貼上你們的 LINE 連結", "_blank");
-          else window.open("這裡貼上你們的 IG 私訊連結", "_blank");
+          if (platform === 'line') window.open(LINE_LINK, "_blank");
+          else window.open(IG_LINK, "_blank");
         }
       };
 
