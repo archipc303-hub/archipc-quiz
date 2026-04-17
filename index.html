@@ -153,14 +153,14 @@
       const [userPainPoint, setUserPainPoint] = useState(""); 
       const [terminalLines, setTerminalLines] = useState([]);
       const [showCopied, setShowCopied] = useState(false);
-      const [isGeneratingImage, setIsGeneratingImage] = useState(false); // 擷圖狀態
+      const [isGeneratingImage, setIsGeneratingImage] = useState(false);
       const [modalContent, setModalContent] = useState(null);
 
       const handleRedirect = async (platform, title, keyword) => {
-        // 👇 ⚠️ 請在這裡統一填寫你們的真實客服連結 ⚠️ 👇
-        const LINE_LINK = "這裡貼上你們的 LINE 連結"; // 日後有 LINE 官方帳號時可在此替換
-        const IG_LINK = "https://ig.me/m/archi.pc_official"; // ✅ 已為您更新為專屬 IG 帳號
-        // 👆 ============================================ 👆
+        // 👇 ⚠️ 聯絡網址設定區 ⚠️ 👇
+        const LINE_LINK = "這裡貼上你們的 LINE 連結"; 
+        const IG_LINK = "https://ig.me/m/archi.pc_official"; 
+        // 👆 ======================= 👆
 
         const ticketId = Math.floor(1000 + Math.random() * 9000);
         const shortPain = userPainPoint ? userPainPoint.substring(0,2) : "無";
@@ -196,7 +196,6 @@
       const handleShare = async (text) => {
         setIsGeneratingImage(true);
         try {
-          // 1. 先複製文字到剪貼簿 (因瀏覽器安全限制，需立即執行)
           const textArea = document.createElement("textarea");
           textArea.value = text;
           document.body.appendChild(textArea);
@@ -205,15 +204,13 @@
           document.execCommand('copy');
           document.body.removeChild(textArea);
 
-          // 2. 針對結果卡片區塊進行擷圖
           const captureArea = document.getElementById('result-capture-area');
           const canvas = await window.html2canvas(captureArea, { 
             useCORS: true, 
-            scale: 2, // 提高畫質
-            backgroundColor: '#0a0f1c' // 設定背景色，避免邊緣透明發黑
+            scale: 2, 
+            backgroundColor: '#0a0f1c' 
           });
           
-          // 3. 嘗試將圖片寫入剪貼簿，若失敗則改為自動下載圖片
           canvas.toBlob(async (blob) => {
             try {
               const item = new ClipboardItem({ 'image/png': blob });
@@ -221,7 +218,6 @@
               setShowCopied("✅ 已複製圖片與文字！");
             } catch (clipboardErr) {
               console.warn("剪貼簿 API 不支援圖片寫入，改為自動下載:", clipboardErr);
-              // Fallback防呆機制：觸發圖片下載
               const link = document.createElement('a');
               link.download = 'ARCHI_PC_專屬診斷結果.png';
               link.href = canvas.toDataURL('image/png');
@@ -247,7 +243,7 @@
             "啟動深層需求解析...",
             "分析運算效能依賴係數...",
             "計算散熱與穩定極限...",
-            "匹配 9 型科技人格數據庫...",
+            "匹配 12 型科技人格數據庫...",
             "載入本地影像資料庫...",
             "生成專屬報告與配置方案..."
           ];
@@ -301,6 +297,7 @@
         setHistory(history.slice(0, -1));
       };
 
+      // --- 包含全新擴增的 12 種人格設定 ---
       const getResultData = () => {
         const { p, s, a } = scores;
 
@@ -419,7 +416,6 @@
         <div className="min-h-screen bg-[#0a0f1c] text-slate-200 font-sans flex flex-col items-center justify-center p-4 relative pb-24">
           <ParticlesBackground />
 
-          {/* 加入 id="result-capture-area"，這整個區塊將會被擷取為圖片 */}
           <div id="result-capture-area" className="max-w-xl w-full bg-[#1e293b]/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-700/50 overflow-hidden relative z-10">
             
             <div className="bg-[#0f172a]/80 p-4 flex items-center justify-between border-b border-slate-800">
@@ -581,7 +577,6 @@
                     </div>
                   </div>
 
-                  {/* 包含 data-html2canvas-ignore，防止這顆按鈕本身出現在截圖中 */}
                   <button 
                     onClick={() => handleShare(`【ARCHI PC 核心診斷】我的專屬科技人格是「${result.typeCode}」！\n${result.subtitle}\n你也來算算最適合你的電腦配置吧！\n👉 測驗連結：https://archipc303-hub.github.io/archipc-quiz`)}
                     disabled={isGeneratingImage}
