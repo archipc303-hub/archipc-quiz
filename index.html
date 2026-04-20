@@ -158,7 +158,7 @@
 
       const handleRedirect = async (platform, title, keyword) => {
         // 👇 ⚠️ 聯絡網址設定區 ⚠️ 👇
-        const LINE_LINK = "https://line.me/R/ti/p/@127ikpql"; 
+        const LINE_LINK = "https://page.line.me/127ikpql"; // ✅ 已改用官方主頁格式，電腦版不再只有 QR Code
         const IG_LINK = "https://ig.me/m/archi.pc_official"; 
         // 👆 ======================= 👆
 
@@ -201,16 +201,17 @@
           
           setTimeout(() => {
             setModalContent(null);
-            if (platform === 'line') window.open(LINE_LINK, "_blank");
-            else window.open(IG_LINK, "_blank"); 
-          }, 4500); // 延長至 4.5 秒，讓玩家有時間看清楚指示
+            // ✅ 解決手機阻擋跳轉：全面改用 window.location.href (當前頁面轉址)
+            if (platform === 'line') window.location.href = LINE_LINK;
+            else window.location.href = IG_LINK; 
+          }, 4500); 
 
         } catch (err) {
           console.error("處理失敗", err);
           setIsGeneratingImage(false);
           // 失敗備用方案
-          if (platform === 'line') window.open(LINE_LINK, "_blank");
-          else window.open(IG_LINK, "_blank");
+          if (platform === 'line') window.location.href = LINE_LINK;
+          else window.location.href = IG_LINK;
         }
       };
 
