@@ -162,6 +162,8 @@
         const IG_LINK = "https://ig.me/m/archi.pc_official"; 
         // 👆 ======================= 👆
 
+        setIsGeneratingImage(true); // 觸發按鈕讀取動畫，避免重複點擊
+
         const ticketId = Math.floor(1000 + Math.random() * 9000);
         const shortPain = userPainPoint ? userPainPoint.substring(0,2) : "無";
         const sysCode = `${title.substring(0,4)}-P${scores.p}S${scores.s}A${scores.a}-${shortPain}`;
@@ -169,6 +171,7 @@
         const textToCopy = `你好，我測出來是${title}！\n想領取專屬配置單與建議。\n\n通關密語：【${keyword}】\n診斷代碼：[${sysCode}]\n取件碼：#${ticketId}`;
         
         try {
+          // 1. 自動複製通關密語文字
           const textArea = document.createElement("textarea");
           textArea.value = textToCopy;
           document.body.appendChild(textArea);
@@ -177,16 +180,35 @@
           document.execCommand('copy');
           document.body.removeChild(textArea);
           
+          // 2. 自動擷取結果卡片並觸發下載
+          const captureArea = document.getElementById('result-capture-area');
+          const canvas = await window.html2canvas(captureArea, { 
+            useCORS: true, 
+            scale: 2, 
+            backgroundColor: '#0a0f1c' 
+          });
+          
+          const link = document.createElement('a');
+          link.download = `ARCHI_PC_專屬診斷_${title.substring(0,4)}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click(); // 觸發下載圖片到相簿/電腦
+          
+          setIsGeneratingImage(false);
+
+          // 3. 顯示明確的引導彈窗，教玩家怎麼做
           const platformName = platform === 'line' ? 'LINE 官方帳號' : 'Instagram 私訊';
-          setModalContent(`✅ 已自動為您複製「通關取件碼」！\n\n即將跳轉至 ${platformName}...\n請在對話框直接「貼上」，系統與客服將為您調出專屬配置單！`);
+          setModalContent(`✅ 已自動為您複製「通關取件碼」\n⬇️ 並已將「結果圖卡」下載至相簿中！\n\n即將跳轉至 ${platformName}...\n進入聊天室後，請「貼上」文字並「傳送」剛下載的圖卡給我們！`);
           
           setTimeout(() => {
             setModalContent(null);
             if (platform === 'line') window.open(LINE_LINK, "_blank");
             else window.open(IG_LINK, "_blank"); 
-          }, 3000);
+          }, 4500); // 延長至 4.5 秒，讓玩家有時間看清楚指示
 
         } catch (err) {
+          console.error("處理失敗", err);
+          setIsGeneratingImage(false);
+          // 失敗備用方案
           if (platform === 'line') window.open(LINE_LINK, "_blank");
           else window.open(IG_LINK, "_blank");
         }
@@ -561,18 +583,20 @@
                       <div className="flex flex-col gap-3 relative z-10">
                       <button 
                         onClick={() => handleRedirect('line', result.title, result.keyword)}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#06C755] hover:bg-[#05a546] text-white font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(6,199,85,0.4)]"
+                        disabled={isGeneratingImage}
+                        className={`w-full flex items-center justify-center gap-2 py-3.5 ${isGeneratingImage ? 'bg-slate-600 cursor-wait' : 'bg-[#06C755] hover:bg-[#05a546] shadow-[0_0_15px_rgba(6,199,85,0.4)]'} text-white font-bold rounded-xl transition-all`}
                       >
                         <Icon name="MessageCircle" className="w-5 h-5" />
-                        透過 LINE 領取配置單
+                        {isGeneratingImage ? "打包檔案中..." : "透過 LINE 領取配置單"}
                       </button>
                       
                       <button 
                         onClick={() => handleRedirect('ig', result.title, result.keyword)}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-md"
+                        disabled={isGeneratingImage}
+                        className={`w-full flex items-center justify-center gap-2 py-3.5 ${isGeneratingImage ? 'bg-slate-600 cursor-wait' : 'bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 shadow-md'} text-white font-bold rounded-xl transition-all`}
                       >
                         <Icon name="Instagram" className="w-5 h-5" />
-                        透過 IG 私訊領取
+                        {isGeneratingImage ? "打包檔案中..." : "透過 IG 私訊領取"}
                       </button>
                     </div>
                   </div>
