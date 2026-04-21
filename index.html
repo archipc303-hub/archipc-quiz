@@ -158,15 +158,11 @@
       const [modalContent, setModalContent] = useState(null);
 
       const handleRedirect = async (platform, title, keyword) => {
-        // 👇 判斷是否為手機裝置
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        
-        // 👇 依據裝置切換最適合的 LINE 連結
-        const LINE_LINK = isMobile 
-          ? "https://line.me/R/ti/p/@127ikpql"  // 手機版：直接喚醒 APP
-          : "https://page.line.me/127ikpql";    // 電腦版：進入精美主頁
-          
-        const IG_LINK = "https://ig.me/m/archi.pc_official";
+        // 👇 ⚠️ 聯絡網址設定區 ⚠️ 👇
+        // LINE 官方預設機制：電腦版網頁「無法直接聊天」，必定會顯示 QR Code 或提示開啟電腦版 LINE 軟體。
+        const LINE_LINK = "https://line.me/R/ti/p/@127ikpql"; 
+        const IG_LINK = "https://ig.me/m/archi.pc_official"; 
+        // 👆 ======================= 👆
 
         setIsGeneratingImage(true); 
 
@@ -200,7 +196,13 @@
           setIsGeneratingImage(false);
 
           const platformName = platform === 'line' ? 'LINE 官方帳號' : 'Instagram 私訊';
-          setModalContent(`✅ 已自動為您複製「通關取件碼」\n⬇️ 並已將「結果圖卡」下載至相簿中！\n\n即將跳轉至 ${platformName}...\n進入聊天室後，請「貼上」文字並「傳送」剛下載的圖卡給我們！`);
+          
+          // 新增針對電腦版使用者的友善提示
+          const desktopHint = platform === 'line' && !(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) 
+            ? "\n\n⚠️ 【電腦版 LINE 提示】\n跳轉後若顯示 QR Code，請使用手機掃描，或點擊允許「開啟 LINE 應用程式」來發送訊息！" 
+            : "";
+
+          setModalContent(`✅ 已自動為您複製「通關取件碼」\n⬇️ 並已將「結果圖卡」下載至相簿/電腦中！\n\n即將跳轉至 ${platformName}...\n進入聊天室後，請「貼上」文字並「傳送」圖卡！${desktopHint}`);
           
           setTimeout(() => {
             setModalContent(null);
