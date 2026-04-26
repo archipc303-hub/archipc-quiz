@@ -6,14 +6,14 @@
   <title>ARCHI PC 核心診斷</title>
   <!-- 載入 Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- 載入 React 與 Babel -->
+  <!-- 載入 React 與 Babel (這是讓瀏覽器看懂程式碼的關鍵！) -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <!-- 載入 html2canvas (用於網頁自動擷圖) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   
-  <!-- 🌟 新增：自定義進階動畫特效 -->
+  <!-- 🌟 專屬 3D 沉浸式特效與動畫 -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
     body { font-family: 'Noto Sans TC', sans-serif; background-color: #050810; }
@@ -31,16 +31,13 @@
       100% { transform: translateY(50px); }
     }
 
-    /* 光球呼吸動畫 */
-    .orb-float {
-      animation: float 8s ease-in-out infinite;
-    }
-    .orb-float-delay {
-      animation: float 10s ease-in-out infinite reverse;
-    }
+    /* 光球與 3D 卡片懸浮動畫 */
+    .animate-float { animation: float 6s ease-in-out infinite; }
+    .animate-float-delay { animation: float 7s ease-in-out infinite 1.5s; }
+    .animate-float-slow { animation: float 8s ease-in-out infinite 0.5s; }
     @keyframes float {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-20px) scale(1.05); }
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
     }
 
     /* 選項點擊波紋特效 */
@@ -54,7 +51,7 @@
       transition: width 0.4s ease-out, height 0.4s ease-out;
     }
     .option-selected .ripple-bg {
-      width: 150%; height: 300px; /* 填滿整個按鈕 */
+      width: 150%; height: 300px;
     }
   </style>
 </head>
@@ -169,9 +166,9 @@
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-[#050810]">
         <div className="absolute inset-0 w-full h-[200%] -top-[50%] bg-tech-grid opacity-60"></div>
         {/* 動態霓虹光球 */}
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full orb-float"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-600/15 blur-[150px] rounded-full orb-float-delay"></div>
-        <div className="absolute top-[40%] left-[60%] w-[300px] h-[300px] bg-cyan-600/10 blur-[100px] rounded-full orb-float" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full animate-float"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-600/15 blur-[150px] rounded-full animate-float-delay"></div>
+        <div className="absolute top-[40%] left-[60%] w-[300px] h-[300px] bg-cyan-600/10 blur-[100px] rounded-full animate-float-slow"></div>
       </div>
     );
 
@@ -337,11 +334,11 @@
         setSelectedIndex(null);
       };
 
-      // 🌟 新增：帶有視覺回饋的點擊處理函式
+      // 🌟 新增：帶有視覺回饋的選項點擊處理函式
       const handleOptionClick = (option, idx) => {
         if (selectedIndex !== null) return; // 鎖定狀態防連點
         
-        setSelectedIndex(idx); // 觸發鎖定動畫
+        setSelectedIndex(idx); // 觸發鎖定與發光動畫
         
         setTimeout(() => {
           // 0.4 秒動畫播放完畢後，執行原有的切換邏輯
@@ -361,7 +358,7 @@
           } else {
             setCurrentNode(option.next);
           }
-        }, 400); // 延遲時間，與 CSS 動畫配合
+        }, 400); // 延遲時間，完美配合 CSS 動畫
       };
 
       const handleBack = () => {
@@ -492,7 +489,8 @@
         <div className="min-h-screen font-sans flex flex-col items-center justify-center p-4 relative pb-24">
           <DynamicBackground />
 
-          <div id="result-capture-area" className={`max-w-xl w-full bg-[#0d1323]/80 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border border-blue-500/20 overflow-hidden relative z-10 transition-all duration-700 ${step === 'intro' ? 'bg-transparent border-transparent shadow-none' : ''}`}>
+          {/* 外框設計：進入答題/結果頁才顯示藍色毛玻璃框，首頁保持通透 */}
+          <div id="result-capture-area" className={`max-w-xl w-full transition-all duration-700 relative z-10 ${step === 'intro' ? 'bg-transparent shadow-none' : 'bg-[#0d1323]/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-blue-500/20 overflow-hidden'}`}>
             
             {step !== 'intro' && (
               <div className="bg-[#0f172a]/80 p-5 flex items-center justify-between border-b border-blue-900/30 relative">
@@ -512,59 +510,66 @@
               </div>
             )}
 
-            <div className={`flex flex-col justify-center ${step === 'intro' ? 'p-0' : 'p-6 md:p-8 min-h-[500px]'}`}>
+            <div className={`flex flex-col justify-center ${step === 'intro' ? 'p-0 w-full max-w-4xl mx-auto' : 'p-6 md:p-8 min-h-[500px]'}`}>
               
-              {/* 🌟 全新升級：海報質感的封面設計 */}
+              {/* 🌟 史詩級封面重製：3D 沉浸式海報風格 */}
               {step === 'intro' && (
                 <div className="w-full flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-1000 py-8 relative">
                   
-                  <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 mb-8 backdrop-blur-md shadow-[0_0_30px_rgba(59,130,246,0.15)]">
+                  <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 mb-6 backdrop-blur-md shadow-[0_0_30px_rgba(59,130,246,0.15)]">
                     <Icon name="Monitor" className="w-5 h-5 text-blue-400" />
                     <span className="text-sm font-bold tracking-widest text-blue-100">ARCHI PC 核心診斷</span>
                   </div>
                   
-                  <h1 className="text-5xl md:text-6xl font-black text-white leading-[1.2] mb-6 drop-shadow-2xl">
+                  <h1 className="text-5xl md:text-6xl font-black text-white leading-[1.2] mb-4 drop-shadow-2xl">
                     你屬於哪一種<br/>
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">科技人格？</span>
                   </h1>
                   
-                  <p className="text-slate-300 text-sm md:text-base font-medium tracking-wide mb-10 max-w-sm px-4">
-                    忘掉艱澀的電腦規格，透過真實生活情境，精準解析你的隱藏效能需求！
+                  <p className="text-slate-300 text-sm md:text-base font-medium tracking-wide mb-10 max-w-md px-4">
+                    12 型極客矩陣，精準解析你的隱藏效能需求！
                   </p>
 
-                  {/* 懸浮裝飾小卡片 (手機版隱藏側邊，保留中間) */}
-                  <div className="relative w-full h-32 mb-10 flex justify-center items-center">
-                    <div className="absolute hidden md:flex left-4 md:left-8 w-24 h-32 bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl border border-slate-700 shadow-xl flex-col items-center justify-center transform -rotate-12 opacity-60">
-                      <Icon name="Cpu" className="w-8 h-8 text-purple-400 mb-2" />
-                      <span className="text-[10px] font-bold text-slate-400">極客開發者</span>
-                    </div>
+                  {/* 3D 漂浮卡片群組 (完美重現海報設計) */}
+                  <div className="relative w-full max-w-2xl h-[320px] md:h-[400px] flex justify-center items-center perspective-1000 mb-8">
                     
-                    <div className="absolute z-10 w-32 h-40 bg-slate-800/90 backdrop-blur-xl rounded-2xl border-2 border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.3)] flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-500">
-                      <div className="absolute -top-3 -right-3">
-                        <span className="bg-pink-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">12型矩陣</span>
+                    {/* 左側裝飾卡片 */}
+                    <div className="absolute left-[2%] sm:left-[10%] animate-float-slow z-0">
+                      <div className="w-32 h-48 md:w-48 md:h-64 bg-gradient-to-b from-slate-800 to-slate-900 rounded-3xl border border-slate-700 shadow-2xl flex flex-col items-center justify-center transform -rotate-12 opacity-80 backdrop-blur-sm">
+                        <Icon name="Cpu" className="w-10 h-10 md:w-16 md:h-16 text-purple-400 mb-3 md:mb-4" />
+                        <span className="text-xs md:text-xl font-bold text-slate-300">極客開發者</span>
                       </div>
-                      <Icon name="MousePointerClick" className="w-12 h-12 text-blue-400 mb-3" />
-                      <span className="text-sm font-black text-white">啟動連線</span>
                     </div>
 
-                    <div className="absolute hidden md:flex right-4 md:right-8 w-24 h-32 bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl border border-slate-700 shadow-xl flex-col items-center justify-center transform rotate-12 opacity-60">
-                      <Icon name="Sparkles" className="w-8 h-8 text-emerald-400 mb-2" />
-                      <span className="text-[10px] font-bold text-slate-400">美學大師</span>
+                    {/* 右側裝飾卡片 */}
+                    <div className="absolute right-[2%] sm:right-[10%] animate-float-delay z-0">
+                      <div className="w-32 h-48 md:w-48 md:h-64 bg-gradient-to-b from-slate-800 to-slate-900 rounded-3xl border border-slate-700 shadow-2xl flex flex-col items-center justify-center transform rotate-12 opacity-80 backdrop-blur-sm">
+                        <Icon name="Sparkles" className="w-10 h-10 md:w-16 md:h-16 text-emerald-400 mb-3 md:mb-4" />
+                        <span className="text-xs md:text-xl font-bold text-slate-300">美學大師</span>
+                      </div>
                     </div>
+
+                    {/* 中央互動點擊卡片 (立即測驗按鈕) */}
+                    <div className="absolute z-20 animate-float">
+                      <button
+                        onClick={handleStart}
+                        className="w-48 h-64 md:w-64 md:h-80 bg-slate-800/90 backdrop-blur-xl rounded-3xl border-2 border-blue-500 shadow-[0_0_50px_rgba(59,130,246,0.4)] flex flex-col items-center justify-center transform hover:scale-105 hover:-translate-y-2 active:scale-95 transition-all duration-300 group overflow-hidden"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-b from-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <div className="absolute -top-3 -right-3 md:-top-5 md:-right-5">
+                          <span className="bg-pink-500 text-white text-[10px] md:text-sm font-bold px-3 py-1 md:px-4 md:py-1 rounded-full shadow-lg animate-pulse">New!</span>
+                        </div>
+                        <Icon name="MousePointerClick" className="w-14 h-14 md:w-20 md:h-20 text-blue-400 mb-4 md:mb-6 group-hover:text-blue-300 transition-colors drop-shadow-md" />
+                        <span className="text-2xl md:text-3xl font-black text-white mb-1 md:mb-2 tracking-wider drop-shadow-md">立即測驗</span>
+                        <span className="text-xs md:text-sm text-blue-300 font-medium">解鎖專屬配置單</span>
+                      </button>
+                    </div>
+
                   </div>
-
-                  <button 
-                    onClick={handleStart}
-                    className="w-[80%] max-w-xs py-4 relative group overflow-hidden rounded-2xl bg-blue-600 hover:bg-blue-500 transition-colors shadow-[0_0_40px_rgba(37,99,235,0.4)] active:scale-95"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <span className="relative z-10 flex items-center justify-center gap-2 text-white font-black text-lg tracking-wider">
-                      立即開始測驗 <Icon name="ChevronRight" className="w-5 h-5" />
-                    </span>
-                  </button>
                 </div>
               )}
 
+              {/* 答題區段 */}
               {step === 'quiz' && (
                 <div className="w-full animate-in slide-in-from-right-8 duration-500" key={currentNode}>
                   <div className="flex justify-between items-center mb-6">
@@ -574,11 +579,11 @@
                         disabled={selectedIndex !== null}
                         className="flex items-center text-xs text-slate-400 hover:text-white transition-colors disabled:opacity-50"
                       >
-                        <Icon name="ArrowLeft" className="w-4 h-4 mr-1" /> 返回
+                        <Icon name="ArrowLeft" className="w-4 h-4 mr-1" /> 返回上一題
                       </button>
                     ) : <div></div>}
-                    <div className="text-xs font-mono text-blue-400 bg-blue-900/30 px-3 py-1 rounded-full border border-blue-500/20">
-                      NODE. {history.length + 1}
+                    <div className="text-[10px] font-mono text-blue-400 bg-blue-900/30 px-3 py-1 rounded-full border border-blue-500/20">
+                      NODE {history.length + 1}
                     </div>
                   </div>
 
@@ -595,21 +600,20 @@
                         <button
                           key={idx}
                           onClick={() => handleOptionClick(option, idx)}
-                          disabled={selectedIndex !== null} // 鎖定期間停用按鈕
+                          disabled={selectedIndex !== null}
                           className={`
                             ${isSelected ? 'option-selected bg-blue-600/90 border-blue-400 scale-[0.98] shadow-[0_0_30px_rgba(59,130,246,0.6)] z-10' : ''}
                             ${isAnotherSelected ? 'opacity-30 scale-[0.95]' : ''}
                             ${!isSelected && !isAnotherSelected ? 'bg-slate-800/60 border-slate-700 hover:bg-slate-700/80 hover:border-blue-500/50 hover:shadow-lg' : ''}
-                            w-full text-left p-5 rounded-2xl border transition-all duration-300 flex items-center justify-between group relative overflow-hidden
+                            w-full text-left p-5 md:p-6 rounded-2xl border transition-all duration-300 flex items-center justify-between group relative overflow-hidden backdrop-blur-sm
                           `}
                         >
                           <div className="ripple-bg"></div>
-                          <span className={`relative z-10 text-base font-medium transition-colors duration-300 ${isSelected ? 'text-white font-bold' : 'text-slate-300 group-hover:text-white'}`}>
+                          <span className={`relative z-10 text-base md:text-lg font-medium transition-colors duration-300 pr-4 ${isSelected ? 'text-white font-bold' : 'text-slate-300 group-hover:text-white'}`}>
                             {option.text}
                           </span>
                           
-                          {/* 圓形勾選框設計 */}
-                          <div className={`relative z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ml-4 transition-colors duration-300 ${isSelected ? 'border-white' : 'border-slate-600 group-hover:border-blue-400'}`}>
+                          <div className={`relative z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors duration-300 ${isSelected ? 'border-white' : 'border-slate-600 group-hover:border-blue-400'}`}>
                             <div className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${isSelected ? 'bg-white scale-100' : 'bg-blue-400 scale-0 group-hover:scale-50'}`} />
                           </div>
                         </button>
@@ -619,20 +623,22 @@
                 </div>
               )}
 
+              {/* 分析運算過場區段 */}
               {step === 'analyzing' && (
-                <div className="font-mono text-sm space-y-4 h-full flex flex-col justify-center items-center text-center">
+                <div className="font-mono text-sm space-y-4 h-full flex flex-col justify-center items-center text-center py-10">
                   <div className="relative mb-8">
                     <div className="absolute inset-0 bg-blue-500 blur-xl opacity-20 rounded-full animate-pulse"></div>
                     <Icon name="Activity" className="w-16 h-16 text-blue-400 animate-spin" />
                   </div>
                   {terminalLines.map((line, idx) => (
-                    <div key={idx} className="text-blue-300 animate-in fade-in slide-in-from-bottom-2 duration-300 text-shadow-sm">
+                    <div key={idx} className="text-blue-300 animate-in fade-in slide-in-from-bottom-2 duration-300 text-shadow-sm text-sm md:text-base">
                       <span className="text-blue-500 mr-2">&gt;</span>{line}
                     </div>
                   ))}
                 </div>
               )}
 
+              {/* 結果展示區段 */}
               {step === 'result' && (() => {
                 const result = getResultData();
                 return (
@@ -642,7 +648,7 @@
                       <div className={`inline-block px-4 py-1.5 rounded-full border text-sm font-bold mb-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] ${result.badgeBg}`}>
                         {result.typeCode}
                       </div>
-                      <h2 className={`text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r ${result.titleColor} drop-shadow-md`}>
+                      <h2 className={`text-2xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r ${result.titleColor} drop-shadow-md`}>
                         {result.title}
                       </h2>
                       <p className="text-slate-300 font-medium mt-2 text-sm md:text-base">"{result.subtitle}"</p>
@@ -678,14 +684,14 @@
 
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-blue-500/30 rounded-2xl p-5 mb-6 shadow-xl relative overflow-hidden">
                       <div className="absolute top-0 right-0 p-2 opacity-10 text-blue-500 mix-blend-screen">
-                        <Icon name="Gift" className="w-24 h-24" />
+                        <Icon name="Gift" className="w-32 h-32" />
                       </div>
                       
-                      <div className="mb-4">
-                        <h3 className="text-blue-400 font-bold flex items-center gap-2 mb-1 text-sm md:text-base">
-                          <Icon name="Sparkles" className="w-4 h-4" /> 您已解鎖專屬神機提案
+                      <div className="mb-5">
+                        <h3 className="text-blue-400 font-bold flex items-center gap-2 mb-1 text-sm md:text-lg">
+                          <Icon name="Sparkles" className="w-5 h-5" /> 解鎖專屬神機提案
                         </h3>
-                        <p className="text-slate-300 text-sm mt-2 relative z-10">
+                        <p className="text-slate-300 text-sm mt-2 relative z-10 leading-relaxed">
                           不花冤枉錢！點擊下方按鈕，系統會自動生成您的「診斷取件碼」，由專業顧問為您精準報價。
                         </p>
                       </div>
@@ -694,18 +700,18 @@
                         <button 
                           onClick={() => handleRedirect('line', result.title, result.keyword)}
                           disabled={isGeneratingImage}
-                          className={`w-full flex items-center justify-center gap-2 py-3.5 ${isGeneratingImage ? 'bg-slate-600 cursor-wait' : 'bg-[#06C755] hover:bg-[#05a546] shadow-[0_0_15px_rgba(6,199,85,0.4)]'} text-white font-bold rounded-xl transition-all active:scale-[0.98]`}
+                          className={`w-full flex items-center justify-center gap-2 py-4 ${isGeneratingImage ? 'bg-slate-600 cursor-wait' : 'bg-[#06C755] hover:bg-[#05a546] shadow-[0_0_20px_rgba(6,199,85,0.4)]'} text-white font-bold rounded-xl transition-all active:scale-[0.98]`}
                         >
-                          <Icon name="MessageCircle" className="w-5 h-5" />
+                          <Icon name="MessageCircle" className="w-6 h-6" />
                           {isGeneratingImage ? "打包檔案中..." : "透過 LINE 領取配置單"}
                         </button>
                         
                         <button 
                           onClick={() => handleRedirect('ig', result.title, result.keyword)}
                           disabled={isGeneratingImage}
-                          className={`w-full flex items-center justify-center gap-2 py-3.5 ${isGeneratingImage ? 'bg-slate-600 cursor-wait' : 'bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 shadow-md'} text-white font-bold rounded-xl transition-all active:scale-[0.98]`}
+                          className={`w-full flex items-center justify-center gap-2 py-4 ${isGeneratingImage ? 'bg-slate-600 cursor-wait' : 'bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 shadow-md'} text-white font-bold rounded-xl transition-all active:scale-[0.98]`}
                         >
-                          <Icon name="Instagram" className="w-5 h-5" />
+                          <Icon name="Instagram" className="w-6 h-6" />
                           {isGeneratingImage ? "打包檔案中..." : "透過 IG 私訊領取"}
                         </button>
                       </div>
@@ -715,12 +721,12 @@
                       onClick={() => handleShare(`【ARCHI PC 核心診斷】我的專屬科技人格是「${result.typeCode}」！\n${result.subtitle}\n你也來算算最適合你的電腦配置吧！\n👉 測驗連結：https://archipc303-hub.github.io/archipc-quiz`)}
                       disabled={isGeneratingImage}
                       data-html2canvas-ignore="true"
-                      className={`w-full flex items-center justify-center gap-2 py-3 ${isGeneratingImage ? 'bg-slate-600 cursor-wait' : 'bg-slate-800 hover:bg-slate-700'} text-white rounded-xl transition-colors border border-slate-700 text-sm font-medium`}
+                      className={`w-full flex items-center justify-center gap-2 py-4 ${isGeneratingImage ? 'bg-slate-600 cursor-wait' : 'bg-slate-800 hover:bg-slate-700'} text-white rounded-xl transition-colors border border-slate-700 text-sm font-medium shadow-lg`}
                     >
                       {isGeneratingImage ? (
-                        <><Icon name="Activity" className="w-4 h-4 animate-spin" /> 正在擷取精美畫面...</>
+                        <><Icon name="Activity" className="w-5 h-5 animate-spin" /> 正在擷取精美畫面...</>
                       ) : (
-                        <><Icon name="Share2" className="w-4 h-4" /> {showCopied ? showCopied : "複製結果並分享"}</>
+                        <><Icon name="Share2" className="w-5 h-5" /> {showCopied ? showCopied : "複製結果並分享"}</>
                       )}
                     </button>
                   </div>
