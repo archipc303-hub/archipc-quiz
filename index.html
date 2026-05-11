@@ -1,777 +1,866 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ARCHI PC 核心診斷</title>
-  <!-- 載入 Tailwind CSS -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+ 
+  <!-- ★ T-10 / S-03 Fix: SEO + Open Graph Meta Tags -->
+  <title>ARCHI PC 核心診斷｜找到你的專屬電腦人格</title>
+  <meta name="description" content="3 分鐘測驗，解鎖你的科技人格，免費獲得專屬電腦配置建議。ARCHI PC 新北新店在地客製電腦品牌。" />
+  <meta property="og:title"       content="你是哪種科技人格？｜ARCHI PC 核心診斷" />
+  <meta property="og:description" content="7 型極客矩陣，精準解析你的隱藏效能需求。完成測驗，免費領取專屬配置清單！" />
+  <meta property="og:image"       content="https://archipc303-hub.github.io/archipc-quiz/images/og-cover.jpg" />
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://archipc303-hub.github.io/archipc-quiz" />
+  <meta name="twitter:card"       content="summary_large_image" />
+ 
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- 載入 React 與 Babel (這是讓瀏覽器看懂程式碼的關鍵！) -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <!-- 載入 html2canvas (用於網頁自動擷圖) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  
-  <!-- 🌟 專屬 3D 沉浸式特效與動畫 -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
     body { font-family: 'Noto Sans TC', sans-serif; background-color: #050810; }
-    
-    /* 科技網格動態背景 */
+ 
+    /* Dynamic grid background */
     .bg-tech-grid {
       background-size: 50px 50px;
-      background-image: 
-        linear-gradient(to right, rgba(59, 130, 246, 0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
+      background-image:
+        linear-gradient(to right, rgba(59,130,246,.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(59,130,246,.05) 1px, transparent 1px);
       animation: gridMove 20s linear infinite;
     }
-    @keyframes gridMove {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(50px); }
-    }
-
-    /* 光球與 3D 卡片懸浮動畫 */
-    .animate-float { animation: float 6s ease-in-out infinite; }
-    .animate-float-delay { animation: float 7s ease-in-out infinite 1.5s; }
-    .animate-float-slow { animation: float 8s ease-in-out infinite 0.5s; }
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-20px); }
-    }
-
-    /* 選項點擊波紋特效 */
+    @keyframes gridMove { 0%{transform:translateY(0)} 100%{transform:translateY(50px)} }
+ 
+    /* Float animations */
+    .af  { animation: float 6s ease-in-out infinite; }
+    .afd { animation: float 7s ease-in-out 1.5s infinite; }
+    .afs { animation: float 8s ease-in-out .5s infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+ 
+    /* Fade-up entrance */
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .fu { animation: fadeUp .45s ease forwards; }
+ 
+    /* Skeleton loading pulse — T-12 Fix */
+    @keyframes sk { 0%,100%{opacity:.15} 50%{opacity:.45} }
+    .sk { animation: sk 1.5s ease-in-out infinite; background:rgba(255,255,255,.07); border-radius:8px; }
+ 
+    /* Option click ripple */
     .ripple-bg {
-      position: absolute;
-      top: 50%; left: 50%;
-      width: 0; height: 0;
-      background: rgba(59, 130, 246, 0.2);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      transition: width 0.4s ease-out, height 0.4s ease-out;
+      position:absolute; top:50%; left:50%;
+      width:0; height:0;
+      background:rgba(59,130,246,.18);
+      border-radius:50%;
+      transform:translate(-50%,-50%);
+      transition:width .4s ease-out, height .4s ease-out;
     }
-    .option-selected .ripple-bg {
-      width: 150%; height: 300px;
-    }
+    .os .ripple-bg { width:150%; height:300px; }
   </style>
 </head>
 <body class="m-0 p-0 overflow-x-hidden text-slate-200 selection:bg-blue-500/30">
-  <div id="root"></div>
-
-  <script type="text/babel">
-    const { useState, useEffect } = React;
-
-    // --- 內建圖示系統 ---
-    const Icon = ({ name, className, size = 24 }) => {
-      const icons = {
-        ChevronRight: <path d="m9 18 6-6-6-6"/>,
-        Monitor: <><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></>,
-        RefreshCw: <><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></>,
-        ArrowLeft: <><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></>,
-        Share2: <><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></>,
-        MessageCircle: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>,
-        Gift: <><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></>,
-        Sparkles: <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>,
-        X: <><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>,
-        Heart: <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>,
-        ZapOff: <><path d="M12.41 6.75 13 2l-2.43 2.92"/><path d="m18.57 12.91-2.18 2.62L15 22l1.64-1.96"/><path d="m11 11.88-2.6 3.12L6 11h4l-2.5-3"/><path d="m2 2 20 20"/></>,
-        Activity: <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>,
-        Crosshair: <><circle cx="12" cy="12" r="10"/><line x1="22" x2="18" y1="12" y2="12"/><line x1="6" x2="2" y1="12" y2="12"/><line x1="12" x2="12" y1="6" y2="2"/><line x1="12" x2="12" y1="22" y2="18"/></>,
-        Instagram: <><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></>,
-        Cpu: <><rect width="16" height="16" x="4" y="4" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3"/><path d="M15 1v3"/><path d="M9 20v3"/><path d="M15 20v3"/><path d="M20 9h3"/><path d="M20 14h3"/><path d="M1 9h3"/><path d="M1 14h3"/></>,
-        MousePointerClick: <><path d="M14 4.1 12 6"/><path d="m5.1 8-2.9-.8"/><path d="m6 12-1.9 2"/><path d="M7.2 2.2 8 5.1"/><path d="M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"/></>
-      };
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-          {icons[name]}
-        </svg>
-      );
-    };
-
-    // --- 動態決策樹題庫 ---
-    const quizFlow = {
-      q_start: {
-        title: "平常打開電腦，你最常拿來做什麼？",
-        options: [
-          { text: "💼 工作賺錢、處理正事", next: 'q_work', effects: { s: 2 } },
-          { text: "🎮 玩遊戲、享受虛擬世界", next: 'q_game', effects: { p: 2 } },
-          { text: "🍿 看看影片、上網耍廢", next: 'q_quality', effects: { a: 2 } }
-        ]
-      },
-      q_work: {
-        title: "工作的時候，你最常處理哪類事情？",
-        options: [
-          { text: "📁 剪影片、跑程式、處理超大檔案", next: 'q_work_leisure', effects: { p: 3, s: 3 } },
-          { text: "📝 打報告、看報表、回信件", next: 'q_work_leisure', effects: { a: 1 } }
-        ]
-      },
-      q_work_leisure: {
-        title: "除了工作，你會用這台電腦看 Netflix 或動畫嗎？",
-        options: [
-          { text: "🎬 當然會，畫質還要好！", next: 'q_quality', effects: { a: 1, p: 1 } },
-          { text: "🚫 不會，這台純粹工作用", next: 'q_budget', effects: { s: 1 } }
-        ]
-      },
-      q_game: {
-        title: "說到玩遊戲，你通常最追求什麼樣的體驗？",
-        options: [
-          { text: "⚔️ 享受刀劍交鋒與極限反應，打王閃避的流暢度是我最大的追求", next: 'q_quality', effects: { p: 4 } },
-          { text: "🔫 追求分秒必爭的射擊對戰，畫面不用最頂，但幀數絕對不能掉！", next: 'q_quality', effects: { p: 3, s: 1 } },
-          { text: "🌍 沉浸在龐大世界與史詩劇情中慢慢探索，光追特效當然要開滿", next: 'q_quality', effects: { p: 5, a: 2 }, pain: "畫質不佳與顯卡瓶頸" },
-          { text: "♟️ 熱愛運籌帷幄與發展文明，就算後期運算量極大、拖慢速度也要玩", next: 'q_quality', effects: { p: 2, s: 4 }, pain: "後期運算卡頓與回合延遲" },
-          { text: "🏗️ 沉迷於建設城市或模擬人生，喜歡裝滿各種模組來打造專屬世界", next: 'q_quality', effects: { s: 3, a: 2 }, pain: "模組過載與記憶體不足" },
-          { text: "🏎️ 享受引擎轟鳴與賽場熱血，追求絲滑無延遲的極速競速體驗", next: 'q_quality', effects: { p: 2, a: 2 } },
-          { text: "📖 把遊戲當互動電影體驗，最在乎劇情氛圍與音樂，操作簡單就好", next: 'q_quality', effects: { a: 3 } }
-        ]
-      },
-      q_quality: {
-        title: "對於遊戲或影片的「畫面」，你的要求是？",
-        options: [
-          { text: "✨ 必須全開！追求 4K 與極致細節", next: 'q_budget', effects: { p: 4, a: 2 } },
-          { text: "⚡ 順暢不卡頓最重要，畫質中等就好", next: 'q_budget', effects: { s: 1, p: 1 } },
-          { text: "能順順看影片、外觀漂亮就好，我不追求極限畫面", next: 'q_budget', effects: { a: 3 } }
-        ]
-      },
-      q_budget: {
-        title: "如果準備換新電腦，你最看重哪一點？",
-        options: [
-          { text: "💎 外觀最重要！想組一台超美的海景房", next: 'analyzing', effects: { a: 5 } },
-          { text: "⚖️ CP值最高！錢要花在刀口上", next: 'analyzing', effects: { p: 2, s: 2 } },
-          { text: "🚀 效能全滿！預算不是問題，我要最強的", next: 'analyzing', effects: { p: 5 } },
-          { text: "🛡️ 絕對穩定！工作不能中斷，當機讓我崩潰", next: 'analyzing', effects: { s: 6 }, pain: "無預警死機與工作中斷" }
-        ]
-      }
-    };
-
-    // --- 本地圖片元件 ---
-    const LocalImageAvatar = ({ imageUrl, altText }) => {
-      return (
-        <div className="relative w-full max-w-[280px] aspect-square mx-auto my-6 flex items-center justify-center bg-slate-800/30 rounded-3xl overflow-hidden border border-slate-700/50 shadow-inner group">
-          <div className="absolute inset-0 rounded-full bg-white/5 blur-3xl group-hover:bg-blue-500/10 transition-colors duration-500"></div>
-          <img 
-            src={imageUrl} 
-            alt={altText} 
-            className="relative z-10 w-full h-full object-contain drop-shadow-2xl transform group-hover:scale-105 transition-transform duration-700 ease-out"
-            onError={(e) => {
-              e.target.onerror = null; 
-              e.target.src = "https://placehold.co/280x280/1e293b/94a3b8?text=Image\\nNot+Found";
-            }}
-          />
-        </div>
-      );
-    };
-
-    // 🌟 全新升級：科技感動態背景 (光球與網格)
-    const DynamicBackground = () => (
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-[#050810]">
-        <div className="absolute inset-0 w-full h-[200%] -top-[50%] bg-tech-grid opacity-60"></div>
-        {/* 動態霓虹光球 */}
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full animate-float"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-600/15 blur-[150px] rounded-full animate-float-delay"></div>
-        <div className="absolute top-[40%] left-[60%] w-[300px] h-[300px] bg-cyan-600/10 blur-[100px] rounded-full animate-float-slow"></div>
+<div id="root"></div>
+ 
+<!-- ★ T-05 Fix: Replace React+BabelStandalone with Preact+htm (no client-side transpile, ~3KB) -->
+<script type="module">
+import { h, render }        from 'https://esm.sh/preact@10';
+import { useState, useEffect } from 'https://esm.sh/preact@10/hooks';
+import htm                  from 'https://esm.sh/htm@3';
+const html = htm.bind(h);
+ 
+/* ═══════════════════════════════════════════════════════════
+   CONFIG  — edit only these lines to update links / location
+═══════════════════════════════════════════════════════════ */
+const CFG = {
+  LINE:    'https://lin.ee/79Ioku99',
+  IG:      'https://ig.me/m/archi.pc_official',
+  URL:     'https://archipc303-hub.github.io/archipc-quiz',
+  ADDR:    '新北市新店區',
+  MAXBAR:  18,   // ★ T-07 Fix: raised from 12 → 18 to avoid overflow
+};
+ 
+/* ═══════════════════════════════════════════════════════════
+   ICONS  — ★ T-05 compatible: raw SVG strings via dangerouslySetInnerHTML
+═══════════════════════════════════════════════════════════ */
+const SVG = {
+  Monitor: '<rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/>',
+  Refresh: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  ArrowL:  '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  Share:   '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/>',
+  Chat:    '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  Gift:    '<polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>',
+  Sparkle: '<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>',
+  X:       '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  Heart:   '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+  Spin:    '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+  Wrench:  '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  IG:      '<rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>',
+  Cpu:     '<rect width="16" height="16" x="4" y="4" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3"/><path d="M15 1v3"/><path d="M9 20v3"/><path d="M15 20v3"/><path d="M20 9h3"/><path d="M20 14h3"/><path d="M1 9h3"/><path d="M1 14h3"/>',
+  Click:   '<path d="M14 4.1 12 6"/><path d="m5.1 8-2.9-.8"/><path d="m6 12-1.9 2"/><path d="M7.2 2.2 8 5.1"/><path d="M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"/>',
+  Pin:     '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
+  TrendUp: '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+  Clock:   '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  Check:   '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+};
+const Ic = ({ n, c, sz=24 }) => html`
+  <svg xmlns="http://www.w3.org/2000/svg" width=${sz} height=${sz} viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+    class=${c} dangerouslySetInnerHTML=${{ __html: SVG[n] }} />`;
+ 
+/* ═══════════════════════════════════════════════════════════
+   QUIZ FLOW
+   ★ T-01 Fix: W-LITE is now a reachable "student" special path
+   ★ T-02 Fix: q_game_pain added → game & work paths both = 6 choices
+   ★ S-02 Fix: q_repair branch added from q_start
+   ★ S-01 Fix: q_budget_range added for real budget capture
+   ★ S-08 Fix: q_pc_age added to surface "換機痛點"
+   ★ S-06 Fix: student option added to q_start
+═══════════════════════════════════════════════════════════ */
+const QUIZ = {
+  q_start: {
+    q: '平常打開電腦，你最常拿來做什麼？',
+    opts: [
+      { t:'💼 工作賺錢、處理正事',          next:'q_work',         fx:{s:2} },
+      { t:'🎮 玩遊戲、享受虛擬世界',         next:'q_game',         fx:{p:2} },
+      { t:'🍿 看影片、上網，輕鬆享樂',        next:'q_quality',      fx:{a:2} },
+      { t:'🔧 電腦出問題，需要維修或升級',     next:'q_repair',       sp:'repair' },
+      { t:'🎓 剛升學或踏入職場，需要一台全能首機', next:'q_budget_range', sp:'student', fx:{s:1,a:1} },
+    ]
+  },
+  q_work: {
+    q: '工作時，你最常處理哪類事情？',
+    opts: [
+      { t:'📁 剪影片、跑程式、處理超大檔案', next:'q_work_leisure', fx:{p:3,s:3} },
+      { t:'📝 打報告、開線上會議、看報表',   next:'q_work_leisure', fx:{a:1,s:1} },
+    ]
+  },
+  q_work_leisure: {
+    q: '除了工作，這台電腦也會拿來娛樂嗎？',
+    opts: [
+      { t:'🎬 會！還要追劇或看 YouTube',    next:'q_quality', fx:{a:1,p:1} },
+      { t:'🚫 純工作，效率和穩定最重要',     next:'q_quality', fx:{s:2} },
+    ]
+  },
+  q_game: {
+    q: '玩遊戲時，你最在乎哪種體驗？',
+    opts: [
+      { t:'⚔️ 動作/Boss戰，閃避的流暢度決定生死',   next:'q_game_pain', fx:{p:4} },
+      { t:'🔫 FPS競技射擊，高幀數比畫質更重要',      next:'q_game_pain', fx:{p:3,s:1} },
+      { t:'🌍 開放世界，光追全開沉浸其中',            next:'q_game_pain', fx:{p:5,a:2} },
+      { t:'♟️ 策略/文明，後期超大運算量也要撐',       next:'q_game_pain', fx:{p:2,s:4} },
+      { t:'🏗️ 城市建設/模擬，裝滿模組打造世界',       next:'q_game_pain', fx:{s:3,a:2} },
+      { t:'📖 劇情互動電影體驗，氛圍比操作重要',       next:'q_game_pain', fx:{a:3} },
+    ]
+  },
+  /* ★ T-02 Fix: new node to equalize path length with work branch */
+  q_game_pain: {
+    q: '對於現在的電腦，最讓你抓狂的是？',
+    opts: [
+      { t:'🔥 激戰時突然掉幀、瞬間變卡頓',    next:'q_quality', fx:{p:2} },
+      { t:'💥 遊戲跑到一半直接崩潰或當機',     next:'q_quality', fx:{s:2} },
+      { t:'⏳ 讀取 / 開機 / 進遊戲等太久',   next:'q_quality', fx:{s:1,p:1} },
+      { t:'😩 高特效一開就卡，只能用低畫質',   next:'q_quality', fx:{p:1,a:2} },
+      { t:'✅ 其實還好，只是想提前升級',       next:'q_quality', fx:{a:1} },
+    ]
+  },
+  q_quality: {
+    q: '對「畫面品質」的要求，你是哪種人？',
+    opts: [
+      { t:'✨ 必須全開！追求 4K 與極致細節',   next:'q_pc_age', fx:{p:4,a:2} },
+      { t:'⚡ 順暢不卡最重要，中等畫質就好',    next:'q_pc_age', fx:{s:1,p:1} },
+      { t:'🖥️ 影片清晰好看、主機外觀漂亮就好',  next:'q_pc_age', fx:{a:3} },
+    ]
+  },
+  /* ★ S-08 Fix: capture PC age as urgency signal */
+  q_pc_age: {
+    q: '你現在用的電腦狀況是？',
+    opts: [
+      { t:'🆕 還沒有，這是我的第一台',         next:'q_budget', ug:null },
+      { t:'✅ 不到 3 年，還算堪用',             next:'q_budget', ug:null },
+      { t:'⚠️ 3–5 年了，開始感覺有點卡',       next:'q_budget', ug:'mild',      fx:{s:1} },
+      { t:'🚨 5 年以上，嚴重卡頓靠意志力在撐',  next:'q_budget', ug:'high',      fx:{s:2} },
+      { t:'💀 已壞 / 幾乎不能用了',             next:'q_budget', ug:'emergency', fx:{p:1,s:1} },
+    ]
+  },
+  q_budget: {
+    q: '準備換新機，你最看重哪一點？',
+    opts: [
+      { t:'💎 外觀最重要！想組一台超美的海景房',  next:'q_budget_range', fx:{a:5} },
+      { t:'⚖️ CP 值最高！錢要花在刀口上',        next:'q_budget_range', fx:{p:2,s:2} },
+      { t:'🚀 效能全滿！預算不是問題，我要最強',   next:'q_budget_range', fx:{p:5} },
+      { t:'🛡️ 絕對穩定！當機是我最大的噩夢',     next:'q_budget_range', fx:{s:6} },
+    ]
+  },
+  /* ★ S-01 Fix: actual budget range capture */
+  q_budget_range: {
+    q: '準備多少預算？（幫助顧問第一時間給出最準確方案）',
+    opts: [
+      { t:'💰 NT$15,000–30,000 入門區',  next:'analyzing', bg:'entry' },
+      { t:'💵 NT$30,000–60,000 主流區',  next:'analyzing', bg:'mid' },
+      { t:'💳 NT$60,000–100,000 高階區', next:'analyzing', bg:'high' },
+      { t:'💎 NT$100,000+ 旗艦不設限',   next:'analyzing', bg:'flagship', fx:{p:2} },
+    ]
+  },
+  /* ★ S-02 Fix: dedicated repair path */
+  q_repair: {
+    q: '電腦出了什麼問題？',
+    opts: [
+      { t:'🐌 超慢！開機、開程式要等很久',             next:'repair_done', rt:'slow' },
+      { t:'💥 一直當機、藍屏、過熱自動關機',            next:'repair_done', rt:'crash' },
+      { t:'🔇 硬體損壞：無畫面 / 無聲音 / 風扇異響', next:'repair_done', rt:'hardware' },
+      { t:'⬆️ 想升級特定零件（RAM / SSD / 顯卡）',   next:'repair_done', rt:'upgrade' },
+    ]
+  },
+};
+ 
+/* ═══════════════════════════════════════════════════════════
+   REPAIR DATA
+═══════════════════════════════════════════════════════════ */
+const REPAIR_DATA = {
+  slow:    { icon:'🐌', title:'效能瓶頸診斷', kw:'效能升級診斷',
+    desc:'開機和執行慢，九成機率是 HDD 老化或 RAM 不足。換裝 SSD＋擴充記憶體通常可讓電腦「再戰 3 年」，費用比換新機省 70%。',
+    tip:'建議升級：SSD 換裝 ＋ RAM 擴充' },
+  crash:   { icon:'💥', title:'系統穩定性診斷', kw:'系統維修診斷',
+    desc:'當機和藍屏可能來自散熱不良、記憶體問題或電源老化。不處理恐造成資料遺失，建議盡快進行壓力測試找出根源。',
+    tip:'建議：全機壓力測試 ＋ 散熱清潔維護' },
+  hardware:{ icon:'🔇', title:'硬體損壞診斷', kw:'硬體維修診斷',
+    desc:'硬體物理損壞需現場診斷才能確認。我們提供免費到府或到店檢測，確認問題後再報修理費用，不先收費。',
+    tip:'建議：免費檢測，確認後報價' },
+  upgrade: { icon:'⬆️', title:'零件升級規劃', kw:'零件升級規劃',
+    desc:'升級特定零件是最划算的效能提升！告訴我們你想升級什麼，我們評估相容性並推薦最佳 CP 值零件。',
+    tip:'建議：零件相容性評估 ＋ 精準報價' },
+};
+ 
+/* ═══════════════════════════════════════════════════════════
+   RESULT DEFINITIONS
+   ★ T-11 Fix: 7 types scored via cosine similarity (no if/else ordering bias)
+   ★ S-05 Fix: reduced from 12 types to 7 + 1 student special
+   ★ M-05 Fix: "天生不對盤" replaced with "升級方向" (positive framing)
+   ★ M-04 Fix: budgetHint added per result
+   ★ S-07 Fix: diff (differentiator) field added per result
+═══════════════════════════════════════════════════════════ */
+const RESULTS = [
+  { code:'X-DEV', img:'images/x-dev.jpg', vector:{p:14,s:8,a:5},
+    title:'無所不能的【全能極客】', sub:'多螢幕多開是日常，運算極限才是你的起點。',
+    tc:'from-purple-400 to-fuchsia-500', bb:'bg-purple-500/20 text-purple-400 border-purple-500/30',
+    desc:'你的使用習慣超狂！同時打遊戲、剪片又開一堆網頁。普通電腦一定崩潰，你需要效能拉滿、散熱最強的「怪物級神機」！',
+    kw:'極客專屬',
+    bh:{ entry:'先從 CPU 優先的配置開始（Ryzen 5 ＋ NVMe SSD）',
+         mid:'RTX 4070 ＋ i7/R7 最佳甜蜜點',
+         high:'RTX 4080 ＋ DDR5，最強組合',
+         flagship:'RTX 4090 ＋ i9/R9，天花板配置' },
+    mate:'頂級創作者', upgrade:'效能硬核玩家',
+    diff:'每台機器出廠前跑 72 小時壓力測試，確保在最猛的任務下也不掉鏈子' },
+ 
+  { code:'C-PRO', img:'images/c-pro.jpg', vector:{p:9,s:11,a:4},
+    title:'靈感無限的【頂級創作者】', sub:'算圖不卡頓，靈感不中斷，時間是你的魔法。',
+    tc:'from-slate-300 to-slate-400', bb:'bg-slate-500/20 text-slate-300 border-slate-500/30',
+    desc:'你常需要剪大檔或做設計。「算圖絕對不能卡」是你的底線。你需要大記憶體、強處理器的創作神機，讓靈感永不中斷！',
+    kw:'創作者升級',
+    bh:{ entry:'64GB RAM ＋ NVMe SSD，最高 CP 升級',
+         mid:'Ryzen 9 ＋ 64GB RAM，算圖最順',
+         high:'工作站級 DDR5 ＋ RTX 4080',
+         flagship:'Threadripper 工作站，無懸念' },
+    mate:'企業領袖', upgrade:'全能極客',
+    diff:'組裝後一年免費到府維修，創作途中不怕硬體出問題' },
+ 
+  { code:'B-PRO', img:'images/b-pro.jpg', vector:{p:4,s:14,a:3},
+    title:'時間就是金錢的【企業領袖】', sub:'你的電腦當機一小時，可能就是幾萬塊的損失。',
+    tc:'from-sky-400 to-blue-500', bb:'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    desc:'對你來說，電腦當機一秒都讓你抓狂！你不追求花俏功能，你需要「絕對穩定、永遠不出包」的可靠工作站。',
+    kw:'企業診斷',
+    bh:{ entry:'ECC 記憶體 ＋ RAID SSD，提供基礎防護',
+         mid:'Intel 商務系列 ＋ 不斷電系統',
+         high:'伺服器等級工作站',
+         flagship:'雙路處理器冗餘系統' },
+    mate:'頂級創作者', upgrade:'全能極客',
+    diff:'提供企業版服務協議，問題 24 小時內響應處理' },
+ 
+  { code:'P-ULT', img:'images/p-ult.jpg', vector:{p:14,s:4,a:4},
+    title:'絕不妥協的【效能硬核玩家】', sub:'你對幀數的渴望，不允許任何硬體拖後腿。',
+    tc:'from-fuchsia-400 to-purple-500', bb:'bg-purple-500/20 text-purple-400 border-purple-500/30',
+    desc:'你打遊戲就是追最順的畫面和最高幀數！最怕花大錢買到錯誤零件導致卡頓。你需要最精準的搭配，把每分錢都變成流暢度！',
+    kw:'效能健檢',
+    bh:{ entry:'RTX 4060 ＋ Ryzen 5，入門電競甜蜜點',
+         mid:'RTX 4070 Super，目前最強 CP 值',
+         high:'RTX 4080 ＋ DDR5，競技最高效',
+         flagship:'RTX 4090 ＋ i9-14900K，無上限' },
+    mate:'全能極客', upgrade:'全能極客',
+    diff:'每顆顯卡實測跑 3DMark，確保你的效能與標示一致' },
+ 
+  { code:'V-MAX', img:'images/v-max.jpg', vector:{p:4,s:5,a:14},
+    title:'品味至上的【美學大師】', sub:'拒絕效能浪費！外觀顏值與實用才是王道。',
+    tc:'from-emerald-400 to-teal-500', bb:'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    desc:'你認為電腦不只要好用，更要是桌上的藝術品！不需要過剩效能，把預算拿來挑超美機殼、完美走線和燈光同步，才是你的作風。',
+    kw:'海景房配置',
+    bh:{ entry:'ITX 小機殼 ＋ 精緻走線入門版',
+         mid:'全透玻璃側板 ＋ ARGB 燈光同步',
+         high:'訂製水冷 ＋ 旗艦機殼頂配',
+         flagship:'訂製液冷 ＋ 鋁製機殼，行動藝術品' },
+    mate:'全能極客', upgrade:'效能硬核玩家',
+    diff:'每台海景房機器整線超過 2 小時，走線工藝是新店業界公認水準' },
+ 
+  { code:'G-CAS', img:'images/g-cas.jpg', vector:{p:7,s:5,a:5},
+    title:'享受樂趣的【休閒電玩咖】', sub:'不追極限畫質，跟朋友連線順暢最重要。',
+    tc:'from-yellow-300 to-amber-400', bb:'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+    desc:'你玩遊戲是為了開心和同樂！不用花大錢追頂級畫質，只要能順順打幾場 LOL 或特戰英豪不卡頓，對你就是滿分！',
+    kw:'主流電競主機',
+    bh:{ entry:'Ryzen 5 ＋ RTX 4060，足夠大部分遊戲',
+         mid:'i5/R5 ＋ RTX 4060 Ti，最甜蜜點',
+         high:'預算多可升 CPU ＋ 擴充 RAM',
+         flagship:'建議把多的預算拿去買遊戲或外設！' },
+    mate:'務實精算師', upgrade:'效能硬核玩家',
+    diff:'我們不推銷用不到的高階零件，給你最剛好夠用的最佳組合' },
+ 
+  { code:'E-OPT', img:'images/e-opt.jpg', vector:{p:6,s:8,a:6},
+    title:'把錢花在刀口上的【務實精算師】', sub:'我不買最貴的，我只買最適合我的！',
+    tc:'from-blue-300 to-sky-400', bb:'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    desc:'你買東西超理性，絕不花冤枉錢！不追最貴規格，也不要浮誇外表，你只想找到「效能剛好夠、價格最划算」的完美平衡點。',
+    kw:'高CP值配置',
+    bh:{ entry:'入門 CP 王：文書 ＋ 輕遊戲全包',
+         mid:'全能套餐：工作娛樂一機搞定',
+         high:'進階精算：用高階預算買旗艦體驗',
+         flagship:'推薦把多的預算存起來等新品！' },
+    mate:'數位游牧者', upgrade:'企業領袖',
+    diff:'每月更新零件報價表，保證你買到當月最優惠的組合' },
+];
+ 
+/* ★ S-06 Fix: student special result (previously W-LITE unreachable) */
+const STUDENT = {
+  code:'EDU', img:'images/e-opt.jpg', vector:{p:5,s:5,a:5},
+  title:'聰明起步的【學生首購族】', sub:'用最划算的預算，組一台撐過四年的全能戰機！',
+  tc:'from-green-400 to-emerald-500', bb:'bg-green-500/20 text-green-400 border-green-500/30',
+  desc:'報告、簡報、輕遊戲、視訊、線上學習全部搞定，還不能太貴？我們最懂學生需求！讓你的預算發揮最大效益。',
+  kw:'學生首購方案',
+  bh:{ entry:'NT$15,000–20,000 就能組一台夠用的',
+       mid:'NT$30,000–40,000 是學生最甜蜜點',
+       high:'預算充裕可考慮高效能版本',
+       flagship:'家境好的話也可評估筆電方案' },
+  mate:'務實精算師', upgrade:'休閒電玩咖',
+  diff:'帶學生證到門市，可享零件工本費折扣優惠 🎓',
+};
+ 
+/* ═══════════════════════════════════════════════════════════
+   SCORING  — ★ T-11 Fix: cosine similarity (no if/else order bias)
+═══════════════════════════════════════════════════════════ */
+function cosine(a, b) {
+  const dot = a.p*b.p + a.s*b.s + a.a*b.a;
+  const ma  = Math.sqrt(a.p**2 + a.s**2 + a.a**2);
+  const mb  = Math.sqrt(b.p**2 + b.s**2 + b.a**2);
+  return (ma && mb) ? dot / (ma * mb) : 0;
+}
+function bestResult(scores, sp) {
+  if (sp === 'student') return STUDENT;
+  return RESULTS.reduce((best, r) => {
+    const sim = cosine(scores, r.vector);
+    return sim > best.sim ? { r, sim } : best;
+  }, { r: RESULTS[RESULTS.length - 1], sim: -1 }).r;
+}
+ 
+/* ═══════════════════════════════════════════════════════════
+   CLIPBOARD  — ★ T-04 Fix: navigator.clipboard API with execCommand fallback
+═══════════════════════════════════════════════════════════ */
+async function clip(text) {
+  try {
+    await navigator.clipboard.writeText(text); return true;
+  } catch {
+    try {
+      const ta = document.createElement('textarea');
+      Object.assign(ta.style, { position:'fixed', opacity:'0', top:'0', left:'0' });
+      ta.value = text;
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta); return true;
+    } catch { return false; }
+  }
+}
+ 
+function genTicket(res, scores, rt) {
+  const id   = Math.floor(1000 + Math.random() * 9000);
+  const code = res  ? `${res.code}-P${scores.p}S${scores.s}A${scores.a}`
+                    : `REP-${(rt||'XX').toUpperCase()}`;
+  const kw   = res  ? res.kw
+                    : (rt ? REPAIR_DATA[rt]?.kw : '');
+  return { id, code, kw };
+}
+ 
+/* ═══════════════════════════════════════════════════════════
+   SUB-COMPONENTS
+═══════════════════════════════════════════════════════════ */
+const Bg = () => html`
+  <div class="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-[#050810]">
+    <div class="absolute inset-0 w-full h-[200%] -top-[50%] bg-tech-grid opacity-60"></div>
+    <div class="absolute -top-[10%] -left-[10%] w-[500px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full af"></div>
+    <div class="absolute -bottom-[10%] -right-[10%] w-[600px] h-[600px] bg-purple-600/15 blur-[150px] rounded-full afd"></div>
+    <div class="absolute top-[40%] left-[60%] w-[300px] h-[300px] bg-cyan-600/10 blur-[100px] rounded-full afs"></div>
+  </div>`;
+ 
+/* ★ T-07 Fix: max now uses CFG.MAXBAR (18) instead of hardcoded 12 */
+const HUD = ({ label, val, cls }) => {
+  const pct = Math.min(100, (val / CFG.MAXBAR) * 100);
+  return html`
+    <div class="flex items-center gap-2 mb-1.5">
+      <span class="text-[10px] font-mono text-slate-400 w-8">${label}</span>
+      <div class="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div class=${'h-full transition-all duration-700 ease-out ' + cls} style=${{ width: pct + '%' }} />
       </div>
-    );
-
-    const HUDBar = ({ label, value, max, colorClass }) => {
-      const percentage = Math.min(100, (value / max) * 100);
-      return (
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className="text-[10px] font-mono text-slate-400 w-8">{label}</span>
-          <div className="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-            <div className={`h-full ${colorClass} transition-all duration-700 ease-out`} style={{ width: `${percentage}%` }} />
+    </div>`;
+};
+ 
+/* ★ T-12 Fix: image loading skeleton state */
+const Img = ({ url, alt }) => {
+  const [ok, setOk] = useState(false);
+  return html`
+    <div class="relative w-full max-w-[280px] aspect-square mx-auto my-5 rounded-3xl overflow-hidden border border-slate-700/50 bg-slate-800/30">
+      ${!ok && html`<div class="sk absolute inset-0" />`}
+      <img src=${url} alt=${alt} loading="lazy"
+        class=${'relative z-10 w-full h-full object-contain drop-shadow-2xl transition-opacity duration-500 ' + (ok ? 'opacity-100' : 'opacity-0')}
+        onLoad=${() => setOk(true)}
+        onError=${e => { e.target.src = 'https://placehold.co/280x280/1e293b/94a3b8?text=ARCHI+PC'; setOk(true); }} />
+    </div>`;
+};
+ 
+/* ═══════════════════════════════════════════════════════════
+   MAIN APP
+═══════════════════════════════════════════════════════════ */
+function App() {
+  const [step,    setStep]    = useState('intro');
+  const [node,    setNode]    = useState('q_start');
+  const [sc,      setSc]      = useState({ p:0, s:0, a:0 });
+  const [hist,    setHist]    = useState([]);
+  const [sp,      setSp]      = useState(null);       // 'repair' | 'student' | null
+  const [rt,      setRt]      = useState(null);       // repairType key
+  const [bg,      setBg]      = useState(null);       // budget key
+  const [ug,      setUg]      = useState(undefined);  // urgency level
+  const [lines,   setLines]   = useState([]);
+  const [selIdx,  setSelIdx]  = useState(null);
+  const [modal,   setModal]   = useState(null);       // { platform, copied }
+  const [shareMsg,setShareMsg]= useState('');
+ 
+  /* Full reset */
+  const startQuiz = () => {
+    setNode('q_start'); setSc({p:0,s:0,a:0}); setHist([]);
+    setSp(null); setRt(null); setBg(null); setUg(undefined);
+    setLines([]); setSelIdx(null); setModal(null); setShareMsg('');
+    setStep('quiz');
+  };
+ 
+  /* ★ T-09 Fix: all setTimeout IDs stored and cleared on cleanup */
+  useEffect(() => {
+    if (step !== 'analyzing') return;
+    const msgs = [
+      '啟動深層需求解析…',
+      '分析運算效能依賴係數…',
+      '計算散熱與穩定極限…',
+      '匹配 7 型科技人格數據庫…',
+      '生成專屬配置方案…',
+    ];
+    const ids = [];
+    let delay = 0;
+    msgs.forEach((m, i) => {
+      ids.push(setTimeout(() => {
+        setLines(prev => [...prev, m]);
+        if (i === msgs.length - 1) ids.push(setTimeout(() => setStep('result'), 1000));
+      }, delay));
+      delay += 650;
+    });
+    return () => ids.forEach(clearTimeout);
+  }, [step]);
+ 
+  const handleOpt = (opt, idx) => {
+    if (selIdx !== null) return;
+    setSelIdx(idx);
+    /* Snapshot before async delay to avoid stale closure */
+    const snap = { node, sc: {...sc}, sp, rt, bg, ug };
+    setTimeout(() => {
+      setHist(h => [...h, snap]);
+      if (opt.fx) setSc(prev => ({
+        p: prev.p + (opt.fx.p||0),
+        s: prev.s + (opt.fx.s||0),
+        a: prev.a + (opt.fx.a||0),
+      }));
+      if (opt.sp)      setSp(opt.sp);
+      if (opt.rt)      setRt(opt.rt);
+      if (opt.bg)      setBg(opt.bg);
+      if ('ug' in opt) setUg(opt.ug);
+      setSelIdx(null);
+      if      (opt.next === 'analyzing')  { setLines([]); setStep('analyzing'); }
+      else if (opt.next === 'repair_done') setStep('repair_done');
+      else                                 setNode(opt.next);
+    }, 370);
+  };
+ 
+  const handleBack = () => {
+    if (!hist.length || selIdx !== null) return;
+    const prev = hist[hist.length - 1];
+    setNode(prev.node); setSc(prev.sc); setSp(prev.sp);
+    setRt(prev.rt); setBg(prev.bg); setUg(prev.ug);
+    setHist(h => h.slice(0, -1));
+    if (step === 'repair_done') setStep('quiz');
+  };
+ 
+  /* ★ M-02 Fix: CTA copies text, shows modal, user clicks to redirect (no forced delay)
+     ★ T-04 Fix: uses modern clipboard API
+     ★ T-08 Fix: window.open('_blank') instead of window.location.href */
+  const handleCTA = async (platform) => {
+    const res = step === 'result' ? bestResult(sc, sp) : null;
+    const rep = step === 'repair_done' ? REPAIR_DATA[rt] : null;
+    const { id, code, kw } = genTicket(res, sc, rt);
+    const titleStr = res ? res.title : (rep ? rep.title : '');
+    const txt = `你好！我測出來是「${titleStr}」\n想領取專屬配置方案或諮詢維修。\n\n通關密語：【${kw}】\n診斷代碼：[${code}]\n取件碼：#${id}`;
+    const ok = await clip(txt);
+    setModal({ platform, copied: ok });
+  };
+ 
+  const doRedirect = () => {
+    const url = modal?.platform === 'line' ? CFG.LINE : CFG.IG;
+    setModal(null);
+    /* ★ T-08 Fix: _blank works on both mobile and desktop */
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+ 
+  const handleShare = async () => {
+    const res = bestResult(sc, sp);
+    const txt = `【ARCHI PC 核心診斷】我的科技人格是「${res.title}」！\n${res.sub}\n快來測測最適合你的電腦配置 👉 ${CFG.URL}`;
+    const ok = await clip(txt);
+    setShareMsg(ok ? '✅ 已複製！快去分享給朋友' : '❌ 請手動截圖分享');
+    setTimeout(() => setShareMsg(''), 3000);
+  };
+ 
+  /* Computed values */
+  const res = step === 'result'     ? bestResult(sc, sp) : null;
+  const rep = step === 'repair_done' ? REPAIR_DATA[rt]   : null;
+ 
+  /* ★ M-07 Fix: urgency banner for換機 pressure */
+  const UG_BANNERS = {
+    emergency: { txt:'⚠️ 電腦已壞！建議優先處理，避免資料損失風險。',               cls:'bg-red-500/20 border-red-500/30 text-red-300' },
+    high:      { txt:'🚨 電腦超過 5 年！繼續撐下去可能隨時掛點，現在是換機好時機。',cls:'bg-orange-500/20 border-orange-500/30 text-orange-300' },
+    mild:      { txt:'⚠️ 3–5 年是換機黃金期，現在組的價格最划算！',               cls:'bg-yellow-500/20 border-yellow-500/30 text-yellow-300' },
+  };
+  const ugBanner = ug ? UG_BANNERS[ug] : null;
+ 
+  /* Reusable card wrapper */
+  const Card = ({ children, border='border-blue-500/20' }) => html`
+    <div class=${'max-w-xl w-full relative z-10 bg-[#0d1323]/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,.5)] border overflow-hidden ' + border}>
+      ${children}
+    </div>`;
+ 
+  /* Card header row */
+  const Header = ({ icon, label, accent='text-blue-400', showHUD=false }) => html`
+    <div class="bg-[#0f172a]/80 p-5 flex items-center justify-between border-b border-blue-900/30 relative">
+      <div class="absolute bottom-0 left-0 h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent w-full opacity-40"></div>
+      <div class="flex items-center gap-2">
+        <${Ic} n=${icon} c=${'w-5 h-5 ' + accent} />
+        <span class="font-bold tracking-widest text-xs text-blue-100 uppercase">${label}</span>
+      </div>
+      ${showHUD && html`
+        <div class="flex flex-col items-end">
+          <span class="text-[8px] text-blue-300 font-mono tracking-widest mb-1 opacity-70">SYS LOAD</span>
+          <${HUD} label="PERF" val=${sc.p} cls="bg-red-500" />
+          <${HUD} label="STAB" val=${sc.s} cls="bg-blue-500" />
+          <${HUD} label="AEST" val=${sc.a} cls="bg-purple-500" />
+        </div>`}
+    </div>`;
+ 
+  /* ★ M-03 Fix: LINE is large primary CTA, IG is small secondary
+     ★ S-09 Fix: service area shown below CTA buttons */
+  const CTABox = () => html`
+    <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-blue-500/30 rounded-2xl p-5 mb-4 relative overflow-hidden">
+      <div class="absolute top-0 right-0 p-2 opacity-10 text-blue-500 pointer-events-none">
+        <${Ic} n="Gift" c="w-28 h-28" />
+      </div>
+      <h3 class="text-blue-400 font-bold flex items-center gap-2 mb-2 text-sm relative z-10">
+        <${Ic} n="Sparkle" c="w-4 h-4" /> 解鎖專屬配置方案
+      </h3>
+      <p class="text-slate-300 text-sm mb-4 leading-relaxed relative z-10">
+        點擊後系統自動生成你的「診斷取件碼」，由專業顧問精準報價，不花冤枉錢！
+      </p>
+      <div class="space-y-3 relative z-10">
+        <!-- ★ M-03: LINE = full-width primary, larger font -->
+        <button onClick=${() => handleCTA('line')}
+          class="w-full flex items-center justify-center gap-2 py-4 bg-[#06C755] hover:bg-[#05a546] text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(6,199,85,.3)] active:scale-[.98] text-base">
+          <${Ic} n="Chat" c="w-6 h-6" />
+          透過 LINE 領取配置方案（推薦）
+        </button>
+        <!-- ★ M-03: IG = small secondary link -->
+        <button onClick=${() => handleCTA('ig')}
+          class="w-full flex items-center justify-center gap-2 py-3 text-slate-400 hover:text-white border border-slate-700 hover:border-pink-500/40 rounded-xl transition-all text-sm">
+          <${Ic} n="IG" c="w-5 h-5 text-pink-400" />
+          或透過 IG 私訊聯繫
+        </button>
+      </div>
+      <!-- ★ S-09 Fix: service area clearly stated -->
+      <p class="text-center text-xs text-slate-500 mt-3 flex items-center justify-center gap-1">
+        <${Ic} n="Pin" c="w-3 h-3" /> 新北市新店區門市 / 全台可宅配
+      </p>
+    </div>`;
+ 
+  /* ── RENDER ─────────────────────────────────────────────────────────── */
+  return html`
+    <div class="min-h-screen flex flex-col items-center justify-center p-4 relative pb-24">
+      <${Bg} />
+ 
+      <!-- ════════════════ INTRO ════════════════ -->
+      ${step === 'intro' && html`
+        <div class="max-w-xl w-full relative z-10 text-center fu py-8">
+ 
+          <!-- ★ M-09 Fix: brand clearly introduced on first screen -->
+          <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 mb-4 backdrop-blur-md">
+            <${Ic} n="Monitor" c="w-4 h-4 text-blue-400" />
+            <span class="text-xs font-bold tracking-widest text-blue-100">ARCHI PC｜新北新店 在地客製電腦品牌</span>
           </div>
-        </div>
-      );
-    };
-
-    function App() {
-      const [step, setStep] = useState('intro');
-      const [currentNode, setCurrentNode] = useState('q_start');
-      const [scores, setScores] = useState({ p: 0, s: 0, a: 0 });
-      const [history, setHistory] = useState([]);
-      const [userPainPoint, setUserPainPoint] = useState(""); 
-      const [terminalLines, setTerminalLines] = useState([]);
-      const [showCopied, setShowCopied] = useState(false);
-      const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-      const [modalContent, setModalContent] = useState(null);
-      
-      // 🌟 新增：選項點擊動態狀態
-      const [selectedIndex, setSelectedIndex] = useState(null);
-
-      const handleRedirect = async (platform, title, keyword) => {
-        // 👇 ⚠️ 聯絡網址設定區 ⚠️ 👇
-        const LINE_LINK = "https://lin.ee/79Ioku99"; 
-        const IG_LINK = "https://ig.me/m/archi.pc_official"; 
-        // 👆 ======================= 👆
-
-        setIsGeneratingImage(true); 
-
-        const ticketId = Math.floor(1000 + Math.random() * 9000);
-        const shortPain = userPainPoint ? userPainPoint.substring(0,2) : "無";
-        const sysCode = `${title.substring(0,4)}-P${scores.p}S${scores.s}A${scores.a}-${shortPain}`;
-        
-        const textToCopy = `你好，我測出來是${title}！\n想領取專屬配置單與建議。\n\n通關密語：【${keyword}】\n診斷代碼：[${sysCode}]\n取件碼：#${ticketId}`;
-        
-        try {
-          const textArea = document.createElement("textarea");
-          textArea.value = textToCopy;
-          document.body.appendChild(textArea);
-          textArea.focus();
-          textArea.select();
-          document.execCommand('copy');
-          document.body.removeChild(textArea);
-          
-          const captureArea = document.getElementById('result-capture-area');
-          const canvas = await window.html2canvas(captureArea, { 
-            useCORS: true, 
-            scale: 2, 
-            backgroundColor: '#0a0f1c' 
-          });
-          
-          const link = document.createElement('a');
-          link.download = `ARCHI_PC_專屬診斷_${title.substring(0,4)}.png`;
-          link.href = canvas.toDataURL('image/png');
-          link.click(); 
-          
-          setIsGeneratingImage(false);
-
-          const platformName = platform === 'line' ? 'LINE 官方帳號' : 'Instagram 私訊';
-          const desktopHint = platform === 'line' && !(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) 
-            ? "\n\n⚠️ 【電腦版 LINE 提示】\n跳轉後若顯示 QR Code，請使用手機掃描，或點擊允許「開啟 LINE 應用程式」來發送訊息！" 
-            : "";
-
-          setModalContent(`✅ 已自動為您複製「通關取件碼」\n⬇️ 並已將「結果圖卡」下載至相簿/電腦中！\n\n即將跳轉至 ${platformName}...\n進入聊天室後，請「貼上」文字並「傳送」圖卡！${desktopHint}`);
-          
-          setTimeout(() => {
-            setModalContent(null);
-            if (platform === 'line') window.location.href = LINE_LINK;
-            else window.location.href = IG_LINK; 
-          }, 4500); 
-
-        } catch (err) {
-          console.error("處理失敗", err);
-          setIsGeneratingImage(false);
-          if (platform === 'line') window.location.href = LINE_LINK;
-          else window.location.href = IG_LINK;
-        }
-      };
-
-      const handleShare = async (text) => {
-        setIsGeneratingImage(true);
-        try {
-          const textArea = document.createElement("textarea");
-          textArea.value = text;
-          document.body.appendChild(textArea);
-          textArea.focus();
-          textArea.select();
-          document.execCommand('copy');
-          document.body.removeChild(textArea);
-
-          const captureArea = document.getElementById('result-capture-area');
-          const canvas = await window.html2canvas(captureArea, { 
-            useCORS: true, 
-            scale: 2, 
-            backgroundColor: '#0a0f1c' 
-          });
-          
-          canvas.toBlob(async (blob) => {
-            try {
-              const item = new ClipboardItem({ 'image/png': blob });
-              await navigator.clipboard.write([item]);
-              setShowCopied("✅ 已複製圖片與文字！");
-            } catch (clipboardErr) {
-              const link = document.createElement('a');
-              link.download = 'ARCHI_PC_專屬診斷結果.png';
-              link.href = canvas.toDataURL('image/png');
-              link.click();
-              setShowCopied("✅ 已複製文字並下載圖片！");
-            }
-            setIsGeneratingImage(false);
-            setTimeout(() => setShowCopied(false), 3000);
-          }, 'image/png');
-
-        } catch (err) {
-          console.error('擷圖失敗', err);
-          setIsGeneratingImage(false);
-          setShowCopied("❌ 擷圖失敗，僅複製文字");
-          setTimeout(() => setShowCopied(false), 3000);
-        }
-      };
-
-      useEffect(() => {
-        let isMounted = true;
-        if (step === 'analyzing') {
-          const lines = [
-            "啟動深層需求解析...",
-            "分析運算效能依賴係數...",
-            "計算散熱與穩定極限...",
-            "匹配 12 型科技人格數據庫...",
-            "載入本地影像資料庫...",
-            "生成專屬報告與配置方案..."
-          ];
-          let delay = 0;
-          lines.forEach((line, index) => {
-            setTimeout(() => {
-              if (!isMounted) return;
-              setTerminalLines(prev => [...prev, line]);
-              if (index === lines.length - 1) {
-                setTimeout(() => { if (isMounted) setStep('result') }, 1500);
-              }
-            }, delay);
-            delay += 800;
-          });
-        }
-        return () => { isMounted = false; };
-      }, [step]);
-
-      const handleStart = () => {
-        setStep('quiz');
-        setCurrentNode('q_start');
-        setScores({ p: 0, s: 0, a: 0 });
-        setUserPainPoint("");
-        setHistory([]);
-        setTerminalLines([]);
-        setSelectedIndex(null);
-      };
-
-      // 🌟 新增：帶有視覺回饋的選項點擊處理函式
-      const handleOptionClick = (option, idx) => {
-        if (selectedIndex !== null) return; // 鎖定狀態防連點
-        
-        setSelectedIndex(idx); // 觸發鎖定與發光動畫
-        
-        setTimeout(() => {
-          // 0.4 秒動畫播放完畢後，執行原有的切換邏輯
-          setHistory([...history, { node: currentNode, prevScores: { ...scores }, prevPain: userPainPoint }]);
-          const newScores = { ...scores };
-          if (option.effects.p) newScores.p += option.effects.p;
-          if (option.effects.s) newScores.s += option.effects.s;
-          if (option.effects.a) newScores.a += option.effects.a;
-          setScores(newScores);
-
-          if (option.pain) setUserPainPoint(option.pain);
-
-          setSelectedIndex(null); // 解除鎖定
-
-          if (option.next === 'analyzing') {
-            setStep('analyzing');
-          } else {
-            setCurrentNode(option.next);
-          }
-        }, 400); // 延遲時間，完美配合 CSS 動畫
-      };
-
-      const handleBack = () => {
-        if (history.length === 0 || selectedIndex !== null) return;
-        const lastState = history[history.length - 1];
-        setCurrentNode(lastState.node);
-        setScores(lastState.prevScores);
-        setUserPainPoint(lastState.prevPain);
-        setHistory(history.slice(0, -1));
-      };
-
-      // --- 包含 12 種角色設定 ---
-      const getResultData = () => {
-        const { p, s, a } = scores;
-
-        if (p >= 10 && s >= 5) {
-          return {
-            typeCode: "X-DEV (全能極客)",
-            imageUrl: "images/x-dev.jpg",
-            title: "無所不能的【全能開發者】", subtitle: "多螢幕多開是日常，運算極限才是你的起點。",
-            titleColor: "from-purple-400 to-fuchsia-500", badgeBg: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-            desc: "你的電腦使用習慣超狂！同時打遊戲、剪片又開一堆網頁。普通電腦一定會崩潰，你需要的是一台效能直接拉滿、散熱最強的「怪物級神機」！",
-            keyword: "極客專屬", compatibility: { mate: "效能硬核玩家", conflict: "桌面美學大師" }
-          };
-        } else if (p >= 8 && s >= 8) {
-          return {
-            typeCode: "D-ELITE (數據菁英)",
-            imageUrl: "images/d-elite.jpg",
-            title: "洞悉一切的【數據菁英】", subtitle: "複雜的運算與龐大數據，都在你的彈指之間。",
-            titleColor: "from-indigo-400 to-cyan-500", badgeBg: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
-            desc: "你對電腦的邏輯運算能力要求極高。比起華麗的畫面，你更在乎海量資料處理時的絕對穩定與超大記憶體吞吐量。你需要一台真正的運算巨獸！",
-            keyword: "高階運算", compatibility: { mate: "企業領袖", conflict: "潮流玩家" }
-          };
-        } else if (p >= 6 && s >= 5 && a >= 5) {
-          return {
-            typeCode: "M-MAX (影音巨匠)",
-            imageUrl: "images/m-max.jpg",
-            title: "締造沉浸的【影音巨匠】", subtitle: "追求最極致的影音體驗，你是視覺與聽覺的統治者。",
-            titleColor: "from-rose-400 to-orange-500", badgeBg: "bg-rose-500/20 text-rose-400 border-rose-500/30",
-            desc: "不管是高階影音剪輯、3D渲染還是享受頂級的藍光電影，你對「聲光效果」有著無與倫比的堅持。你需要色彩最準的螢幕與最強的影音解碼效能！",
-            keyword: "影音旗艦", compatibility: { mate: "桌面美學大師", conflict: "務實精算師" }
-          };
-        } else if (p >= 6 && s >= 5) {
-          return {
-            typeCode: "C-PRO (專業創作者)",
-            imageUrl: "images/c-pro.jpg",
-            title: "靈感無限的【頂級創作者】", subtitle: "算圖不卡頓，靈感不中斷，時間是你的魔法。",
-            titleColor: "from-slate-300 to-slate-400", badgeBg: "bg-slate-500/20 text-slate-300 border-slate-500/30",
-            desc: "你常常需要剪輯大檔案或做設計。「算圖絕對不能卡」跟「絕對不能當機」是你的底線。你需要一台記憶體夠大、處理器超強的創作神機！",
-            keyword: "創作者升級", compatibility: { mate: "企業領袖", conflict: "休閒電玩咖" }
-          };
-        } else if (s >= 6) {
-          return {
-            typeCode: "B-PRO (企業領袖)",
-            imageUrl: "images/b-pro.jpg",
-            title: "時間就是金錢的【企業領袖】", subtitle: "你的電腦當機一小時，可能就是幾萬塊的損失。",
-            titleColor: "from-sky-400 to-blue-500", badgeBg: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-            desc: "對你來說，時間就是金錢，電腦當機一秒都會讓你抓狂！你不追求花俏的功能，你需要的是一台「絕對穩定、永遠不出包」的可靠工作站。",
-            keyword: "企業診斷", compatibility: { mate: "專業創作者", conflict: "務實精算師" }
-          };
-        } else if (p >= 10 && a >= 5) {
-          return {
-            typeCode: "S-STAR (魅影實況主)",
-            imageUrl: "images/s-star.jpg",
-            title: "閃耀全場的【魅影實況主】", subtitle: "遊戲要打得帥，主機也要顏值爆表！",
-            titleColor: "from-amber-400 to-yellow-500", badgeBg: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-            desc: "你不僅追求遊戲要順，主機更要長得超好看！你喜歡閃亮的燈效和透明的玻璃機殼。你需要一台就算邊開實況邊打遊戲，也絕對不卡的美型神機。",
-            keyword: "海景房頂配", compatibility: { mate: "桌面美學大師", conflict: "數位游牧者" }
-          };
-        } else if (p >= 8) {
-          return {
-            typeCode: "P-ULT (效能硬核玩家)",
-            imageUrl: "images/p-ult.jpg",
-            title: "絕不妥協的【效能硬核玩家】", subtitle: "你對幀數與畫質的渴望，不允許任何硬體拖後腿。",
-            titleColor: "from-fuchsia-400 to-purple-500", badgeBg: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-            desc: "你打遊戲就是追求最順的畫面和最高的幀數！你最怕花大錢卻買到不適合的零件導致遊戲卡頓。你需要最精準的搭配，把每一分錢都變成遊戲裡的流暢度！",
-            keyword: "效能健檢", compatibility: { mate: "全能極客", conflict: "數位游牧者" }
-          };
-        } else if (a >= 7 && p <= 5) {
-          return {
-            typeCode: "T-POP (潮流玩家)",
-            imageUrl: "images/t-pop.jpg",
-            title: "引領話題的【潮流玩家】", subtitle: "效能剛好就行，但桌面的氛圍感絕對要拉滿！",
-            titleColor: "from-pink-400 to-fuchsia-400", badgeBg: "bg-pink-500/20 text-pink-400 border-pink-500/30",
-            desc: "電腦對你來說不只是工具，更是展現個人品味的潮流單品！你喜歡輕度的遊戲與娛樂，但機殼外觀、燈光同步與整體桌搭，才是你最在乎的靈魂！",
-            keyword: "質感桌搭", compatibility: { mate: "魅影實況主", conflict: "務實精算師" }
-          };
-        } else if (a >= 6) {
-          return {
-            typeCode: "V-MAX (桌面美學大師)",
-            imageUrl: "images/v-max.jpg",
-            title: "品味至上的【桌面美學大師】", subtitle: "拒絕效能浪費！外觀顏值與實用才是王道。",
-            titleColor: "from-emerald-400 to-teal-500", badgeBg: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-            desc: "你認為電腦不只要好用，更要是桌上的藝術品！你不需要買用不到的過剩效能，把預算拿來挑一個超美的機殼、把線理得乾乾淨淨，才是你的作風。",
-            keyword: "海景房配置", compatibility: { mate: "魅影實況主", conflict: "全能極客" }
-          };
-        } else if (p >= 4 && p < 8) {
-          return {
-            typeCode: "G-CAS (休閒電玩咖)",
-            imageUrl: "images/g-cas.jpg",
-            title: "享受樂趣的【休閒電玩咖】", subtitle: "不用追求極限畫質，跟朋友連線順暢最重要。",
-            titleColor: "from-yellow-300 to-amber-400", badgeBg: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-            desc: "你玩遊戲是為了開心跟朋友同樂！不用花大錢追求什麼頂級畫質，只要能順順打幾場 LOL 或特戰英豪不卡頓，這台電腦對你來說就滿分了！",
-            keyword: "主流電競主機", compatibility: { mate: "務實精算師", conflict: "專業創作者" }
-          };
-        } else if (s <= 4 && p <= 3 && a < 5) {
-          return {
-            typeCode: "W-LITE (數位游牧者)",
-            imageUrl: "images/w-lite.jpg",
-            title: "輕巧自在的【數位游牧者】", subtitle: "簡約、安靜、順暢，生活與工作的完美平衡。",
-            titleColor: "from-teal-300 to-emerald-400", badgeBg: "bg-teal-500/20 text-teal-400 border-teal-500/30",
-            desc: "你平常只用電腦上網、打報告或看影片。你不喜歡會發光、又大又吵的電競主機。一台安靜、省空間又耐看的小電腦，最適合你的簡單生活。",
-            keyword: "極簡文書主機", compatibility: { mate: "務實精算師", conflict: "效能硬核玩家" }
-          };
-        } else {
-          return {
-            typeCode: "E-OPT (務實精算師)",
-            imageUrl: "images/e-opt.jpg",
-            title: "把錢花在刀口上的【務實精算師】", subtitle: "我不買最貴的，我只買最適合我的！",
-            titleColor: "from-blue-300 to-sky-400", badgeBg: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-            desc: "你買東西超級理性，絕對不花冤枉錢！你不追求最貴的規格，也不要浮誇的外表，你只想找到「效能剛好夠用、價格最划算」的完美平衡點。",
-            keyword: "高CP值配置", compatibility: { mate: "數位游牧者", conflict: "企業領袖" }
-          };
-        }
-      };
-
-      return (
-        <div className="min-h-screen font-sans flex flex-col items-center justify-center p-4 relative pb-24">
-          <DynamicBackground />
-
-          {/* 外框設計：進入答題/結果頁才顯示藍色毛玻璃框，首頁保持通透 */}
-          <div id="result-capture-area" className={`max-w-xl w-full transition-all duration-700 relative z-10 ${step === 'intro' ? 'bg-transparent shadow-none' : 'bg-[#0d1323]/80 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-blue-500/20 overflow-hidden'}`}>
-            
-            {step !== 'intro' && (
-              <div className="bg-[#0f172a]/80 p-5 flex items-center justify-between border-b border-blue-900/30 relative">
-                <div className="absolute bottom-0 left-0 h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent w-full opacity-50"></div>
-                <div className="flex items-center space-x-2">
-                  <Icon name="Monitor" className="text-blue-400 w-5 h-5" />
-                  <span className="font-bold tracking-widest text-xs text-blue-100 uppercase">ARCHI PC Core</span>
-                </div>
-                {step === 'quiz' && (
-                  <div className="flex flex-col items-end">
-                    <span className="text-[8px] text-blue-300 font-mono tracking-widest mb-1 opacity-80">SYS LOAD</span>
-                    <HUDBar label="PERF" value={scores.p} max={12} colorClass="bg-red-500 shadow-[0_0_8px_#ef4444]" />
-                    <HUDBar label="STAB" value={scores.s} max={12} colorClass="bg-blue-500 shadow-[0_0_8px_#3b82f6]" />
-                    <HUDBar label="AEST" value={scores.a} max={12} colorClass="bg-purple-500 shadow-[0_0_8px_#a855f7]" />
-                  </div>
-                )}
+ 
+          <h1 class="text-5xl md:text-6xl font-black text-white leading-[1.2] mb-3">
+            你屬於哪一種<br/>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">科技人格？</span>
+          </h1>
+          <p class="text-slate-300 text-sm md:text-base font-medium mb-3 max-w-md mx-auto">
+            7 型極客矩陣，精準解析你的隱藏效能需求！
+          </p>
+ 
+          <!-- ★ M-01 Fix: value proposition clearly stated before CTA -->
+          <div class="flex flex-wrap justify-center gap-4 mb-8 text-xs text-slate-400">
+            <span class="flex items-center gap-1"><${Ic} n="Clock"   c="w-3.5 h-3.5 text-blue-400" /> 約 3 分鐘完成</span>
+            <span class="flex items-center gap-1"><${Ic} n="Gift"    c="w-3.5 h-3.5 text-purple-400" /> 免費獲取專屬配置清單</span>
+            <span class="flex items-center gap-1"><${Ic} n="Check"   c="w-3.5 h-3.5 text-green-400" /> 已服務 5,000+ 台</span>
+          </div>
+ 
+          <!-- 3D Floating Cards + CTA -->
+          <div class="relative w-full max-w-2xl mx-auto h-[300px] md:h-[370px] flex justify-center items-center mb-8">
+            <div class="absolute left-[2%] sm:left-[8%] afs z-0">
+              <div class="w-32 h-44 md:w-44 md:h-60 bg-gradient-to-b from-slate-800 to-slate-900 rounded-3xl border border-slate-700 shadow-2xl flex flex-col items-center justify-center -rotate-12 opacity-80">
+                <${Ic} n="Cpu" c="w-10 h-10 md:w-14 md:h-14 text-purple-400 mb-3" />
+                <span class="text-xs md:text-lg font-bold text-slate-300">全能極客</span>
               </div>
-            )}
-
-            <div className={`flex flex-col justify-center ${step === 'intro' ? 'p-0 w-full max-w-4xl mx-auto' : 'p-6 md:p-8 min-h-[500px]'}`}>
-              
-              {/* 🌟 史詩級封面重製：3D 沉浸式海報風格 */}
-              {step === 'intro' && (
-                <div className="w-full flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-1000 py-8 relative">
-                  
-                  <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 mb-6 backdrop-blur-md shadow-[0_0_30px_rgba(59,130,246,0.15)]">
-                    <Icon name="Monitor" className="w-5 h-5 text-blue-400" />
-                    <span className="text-sm font-bold tracking-widest text-blue-100">ARCHI PC 核心診斷</span>
-                  </div>
-                  
-                  <h1 className="text-5xl md:text-6xl font-black text-white leading-[1.2] mb-4 drop-shadow-2xl">
-                    你屬於哪一種<br/>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">科技人格？</span>
-                  </h1>
-                  
-                  <p className="text-slate-300 text-sm md:text-base font-medium tracking-wide mb-10 max-w-md px-4">
-                    12 型極客矩陣，精準解析你的隱藏效能需求！
-                  </p>
-
-                  {/* 3D 漂浮卡片群組 (完美重現海報設計) */}
-                  <div className="relative w-full max-w-2xl h-[320px] md:h-[400px] flex justify-center items-center perspective-1000 mb-8">
-                    
-                    {/* 左側裝飾卡片 */}
-                    <div className="absolute left-[2%] sm:left-[10%] animate-float-slow z-0">
-                      <div className="w-32 h-48 md:w-48 md:h-64 bg-gradient-to-b from-slate-800 to-slate-900 rounded-3xl border border-slate-700 shadow-2xl flex flex-col items-center justify-center transform -rotate-12 opacity-80 backdrop-blur-sm">
-                        <Icon name="Cpu" className="w-10 h-10 md:w-16 md:h-16 text-purple-400 mb-3 md:mb-4" />
-                        <span className="text-xs md:text-xl font-bold text-slate-300">極客開發者</span>
-                      </div>
-                    </div>
-
-                    {/* 右側裝飾卡片 */}
-                    <div className="absolute right-[2%] sm:right-[10%] animate-float-delay z-0">
-                      <div className="w-32 h-48 md:w-48 md:h-64 bg-gradient-to-b from-slate-800 to-slate-900 rounded-3xl border border-slate-700 shadow-2xl flex flex-col items-center justify-center transform rotate-12 opacity-80 backdrop-blur-sm">
-                        <Icon name="Sparkles" className="w-10 h-10 md:w-16 md:h-16 text-emerald-400 mb-3 md:mb-4" />
-                        <span className="text-xs md:text-xl font-bold text-slate-300">美學大師</span>
-                      </div>
-                    </div>
-
-                    {/* 中央互動點擊卡片 (立即測驗按鈕) */}
-                    <div className="absolute z-20 animate-float">
-                      <button
-                        onClick={handleStart}
-                        className="w-48 h-64 md:w-64 md:h-80 bg-slate-800/90 backdrop-blur-xl rounded-3xl border-2 border-blue-500 shadow-[0_0_50px_rgba(59,130,246,0.4)] flex flex-col items-center justify-center transform hover:scale-105 hover:-translate-y-2 active:scale-95 transition-all duration-300 group overflow-hidden"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-b from-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <div className="absolute -top-3 -right-3 md:-top-5 md:-right-5">
-                          <span className="bg-pink-500 text-white text-[10px] md:text-sm font-bold px-3 py-1 md:px-4 md:py-1 rounded-full shadow-lg animate-pulse">New!</span>
-                        </div>
-                        <Icon name="MousePointerClick" className="w-14 h-14 md:w-20 md:h-20 text-blue-400 mb-4 md:mb-6 group-hover:text-blue-300 transition-colors drop-shadow-md" />
-                        <span className="text-2xl md:text-3xl font-black text-white mb-1 md:mb-2 tracking-wider drop-shadow-md">立即測驗</span>
-                        <span className="text-xs md:text-sm text-blue-300 font-medium">解鎖專屬配置單</span>
-                      </button>
-                    </div>
-
-                  </div>
+            </div>
+            <div class="absolute right-[2%] sm:right-[8%] afd z-0">
+              <div class="w-32 h-44 md:w-44 md:h-60 bg-gradient-to-b from-slate-800 to-slate-900 rounded-3xl border border-slate-700 shadow-2xl flex flex-col items-center justify-center rotate-12 opacity-80">
+                <${Ic} n="Sparkle" c="w-10 h-10 md:w-14 md:h-14 text-emerald-400 mb-3" />
+                <span class="text-xs md:text-lg font-bold text-slate-300">美學大師</span>
+              </div>
+            </div>
+            <div class="absolute z-20 af">
+              <button onClick=${startQuiz}
+                class="w-48 h-64 md:w-64 md:h-80 bg-slate-800/90 backdrop-blur-xl rounded-3xl border-2 border-blue-500 shadow-[0_0_50px_rgba(59,130,246,.4)] flex flex-col items-center justify-center hover:scale-105 hover:-translate-y-2 active:scale-95 transition-all duration-300 group overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-b from-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div class="absolute -top-3 -right-3">
+                  <span class="bg-pink-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">含維修診斷</span>
                 </div>
-              )}
-
-              {/* 答題區段 */}
-              {step === 'quiz' && (
-                <div className="w-full animate-in slide-in-from-right-8 duration-500" key={currentNode}>
-                  <div className="flex justify-between items-center mb-6">
-                    {history.length > 0 ? (
-                      <button 
-                        onClick={handleBack} 
-                        disabled={selectedIndex !== null}
-                        className="flex items-center text-xs text-slate-400 hover:text-white transition-colors disabled:opacity-50"
-                      >
-                        <Icon name="ArrowLeft" className="w-4 h-4 mr-1" /> 返回上一題
-                      </button>
-                    ) : <div></div>}
-                    <div className="text-[10px] font-mono text-blue-400 bg-blue-900/30 px-3 py-1 rounded-full border border-blue-500/20">
-                      NODE {history.length + 1}
-                    </div>
-                  </div>
-
-                  <h2 className="text-xl md:text-2xl font-bold text-white mb-8 leading-relaxed drop-shadow-md">
-                    {quizFlow[currentNode].title}
-                  </h2>
-                  
-                  <div className="space-y-4">
-                    {quizFlow[currentNode].options.map((option, idx) => {
-                      const isSelected = selectedIndex === idx;
-                      const isAnotherSelected = selectedIndex !== null && selectedIndex !== idx;
-
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() => handleOptionClick(option, idx)}
-                          disabled={selectedIndex !== null}
-                          className={`
-                            ${isSelected ? 'option-selected bg-blue-600/90 border-blue-400 scale-[0.98] shadow-[0_0_30px_rgba(59,130,246,0.6)] z-10' : ''}
-                            ${isAnotherSelected ? 'opacity-30 scale-[0.95]' : ''}
-                            ${!isSelected && !isAnotherSelected ? 'bg-slate-800/60 border-slate-700 hover:bg-slate-700/80 hover:border-blue-500/50 hover:shadow-lg' : ''}
-                            w-full text-left p-5 md:p-6 rounded-2xl border transition-all duration-300 flex items-center justify-between group relative overflow-hidden backdrop-blur-sm
-                          `}
-                        >
-                          <div className="ripple-bg"></div>
-                          <span className={`relative z-10 text-base md:text-lg font-medium transition-colors duration-300 pr-4 ${isSelected ? 'text-white font-bold' : 'text-slate-300 group-hover:text-white'}`}>
-                            {option.text}
-                          </span>
-                          
-                          <div className={`relative z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors duration-300 ${isSelected ? 'border-white' : 'border-slate-600 group-hover:border-blue-400'}`}>
-                            <div className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${isSelected ? 'bg-white scale-100' : 'bg-blue-400 scale-0 group-hover:scale-50'}`} />
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* 分析運算過場區段 */}
-              {step === 'analyzing' && (
-                <div className="font-mono text-sm space-y-4 h-full flex flex-col justify-center items-center text-center py-10">
-                  <div className="relative mb-8">
-                    <div className="absolute inset-0 bg-blue-500 blur-xl opacity-20 rounded-full animate-pulse"></div>
-                    <Icon name="Activity" className="w-16 h-16 text-blue-400 animate-spin" />
-                  </div>
-                  {terminalLines.map((line, idx) => (
-                    <div key={idx} className="text-blue-300 animate-in fade-in slide-in-from-bottom-2 duration-300 text-shadow-sm text-sm md:text-base">
-                      <span className="text-blue-500 mr-2">&gt;</span>{line}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* 結果展示區段 */}
-              {step === 'result' && (() => {
-                const result = getResultData();
-                return (
-                  <div className="animate-in fade-in zoom-in-95 duration-700">
-                    
-                    <div className="text-center mb-2">
-                      <div className={`inline-block px-4 py-1.5 rounded-full border text-sm font-bold mb-3 shadow-[0_0_15px_rgba(0,0,0,0.5)] ${result.badgeBg}`}>
-                        {result.typeCode}
-                      </div>
-                      <h2 className={`text-2xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r ${result.titleColor} drop-shadow-md`}>
-                        {result.title}
-                      </h2>
-                      <p className="text-slate-300 font-medium mt-2 text-sm md:text-base">"{result.subtitle}"</p>
-                    </div>
-
-                    <LocalImageAvatar imageUrl={result.imageUrl} altText={result.title} />
-
-                    <div className="grid grid-cols-2 gap-4 mb-6 mt-4">
-                      <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 flex flex-col items-center text-center shadow-lg relative overflow-hidden group hover:border-pink-500/50 transition-colors">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-600 to-rose-400"></div>
-                        <div className="group-hover:scale-110 group-hover:-translate-y-1 transition-transform text-pink-500 mb-2">
-                          <Icon name="Heart" className="w-6 h-6" />
-                        </div>
-                        <span className="text-xs text-slate-400 font-bold mb-1 tracking-wider">🏆 最佳合夥人</span>
-                        <span className="text-base md:text-lg font-extrabold text-slate-100">{result.compatibility.mate}</span>
-                      </div>
-                      
-                      <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 flex flex-col items-center text-center shadow-lg relative overflow-hidden group hover:border-orange-500/50 transition-colors">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-600 to-amber-400"></div>
-                        <div className="group-hover:scale-110 group-hover:-translate-y-1 transition-transform text-orange-500 mb-2">
-                          <Icon name="ZapOff" className="w-6 h-6" />
-                        </div>
-                        <span className="text-xs text-slate-400 font-bold mb-1 tracking-wider">🚫 天生不對盤</span>
-                        <span className="text-base md:text-lg font-extrabold text-slate-100">{result.compatibility.conflict}</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5 mb-6 text-center shadow-inner backdrop-blur-sm">
-                      <p className="text-slate-300 text-sm md:text-base leading-relaxed">
-                        {result.desc}
-                      </p>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-blue-500/30 rounded-2xl p-5 mb-6 shadow-xl relative overflow-hidden">
-                      <div className="absolute top-0 right-0 p-2 opacity-10 text-blue-500 mix-blend-screen">
-                        <Icon name="Gift" className="w-32 h-32" />
-                      </div>
-                      
-                      <div className="mb-5">
-                        <h3 className="text-blue-400 font-bold flex items-center gap-2 mb-1 text-sm md:text-lg">
-                          <Icon name="Sparkles" className="w-5 h-5" /> 解鎖專屬神機提案
-                        </h3>
-                        <p className="text-slate-300 text-sm mt-2 relative z-10 leading-relaxed">
-                          不花冤枉錢！點擊下方按鈕，系統會自動生成您的「診斷取件碼」，由專業顧問為您精準報價。
-                        </p>
-                      </div>
-                      
-                      <div className="flex flex-col gap-3 relative z-10">
-                        <button 
-                          onClick={() => handleRedirect('line', result.title, result.keyword)}
-                          disabled={isGeneratingImage}
-                          className={`w-full flex items-center justify-center gap-2 py-4 ${isGeneratingImage ? 'bg-slate-600 cursor-wait' : 'bg-[#06C755] hover:bg-[#05a546] shadow-[0_0_20px_rgba(6,199,85,0.4)]'} text-white font-bold rounded-xl transition-all active:scale-[0.98]`}
-                        >
-                          <Icon name="MessageCircle" className="w-6 h-6" />
-                          {isGeneratingImage ? "打包檔案中..." : "透過 LINE 領取配置單"}
-                        </button>
-                        
-                        <button 
-                          onClick={() => handleRedirect('ig', result.title, result.keyword)}
-                          disabled={isGeneratingImage}
-                          className={`w-full flex items-center justify-center gap-2 py-4 ${isGeneratingImage ? 'bg-slate-600 cursor-wait' : 'bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 shadow-md'} text-white font-bold rounded-xl transition-all active:scale-[0.98]`}
-                        >
-                          <Icon name="Instagram" className="w-6 h-6" />
-                          {isGeneratingImage ? "打包檔案中..." : "透過 IG 私訊領取"}
-                        </button>
-                      </div>
-                    </div>
-
-                    <button 
-                      onClick={() => handleShare(`【ARCHI PC 核心診斷】我的專屬科技人格是「${result.typeCode}」！\n${result.subtitle}\n你也來算算最適合你的電腦配置吧！\n👉 測驗連結：https://archipc303-hub.github.io/archipc-quiz`)}
-                      disabled={isGeneratingImage}
-                      data-html2canvas-ignore="true"
-                      className={`w-full flex items-center justify-center gap-2 py-4 ${isGeneratingImage ? 'bg-slate-600 cursor-wait' : 'bg-slate-800 hover:bg-slate-700'} text-white rounded-xl transition-colors border border-slate-700 text-sm font-medium shadow-lg`}
-                    >
-                      {isGeneratingImage ? (
-                        <><Icon name="Activity" className="w-5 h-5 animate-spin" /> 正在擷取精美畫面...</>
-                      ) : (
-                        <><Icon name="Share2" className="w-5 h-5" /> {showCopied ? showCopied : "複製結果並分享"}</>
-                      )}
-                    </button>
-                  </div>
-                );
-              })()}
-
+                <${Ic} n="Click" c="w-14 h-14 md:w-20 md:h-20 text-blue-400 mb-4 group-hover:text-blue-300 transition-colors" />
+                <span class="text-2xl md:text-3xl font-black text-white mb-1 tracking-wider">立即測驗</span>
+                <span class="text-xs md:text-sm text-blue-300 font-medium">解鎖專屬配置單</span>
+              </button>
             </div>
           </div>
-
-          {step === 'result' && (
-            <button 
-              onClick={handleStart}
-              data-html2canvas-ignore="true"
-              className="fixed bottom-6 right-6 md:bottom-8 md:right-8 bg-slate-800/90 backdrop-blur-md border border-slate-600 shadow-[0_0_20px_rgba(0,0,0,0.5)] text-white px-5 py-3 rounded-full flex items-center justify-center hover:bg-slate-700 hover:scale-105 active:scale-95 transition-all z-50 font-bold"
-            >
-              <Icon name="RefreshCw" className="w-4 h-4 mr-2" />
-              重新測驗
+ 
+          <!-- ★ M-08 Fix: social proof section -->
+          <div class="flex flex-wrap justify-center gap-4 text-xs text-slate-400 mb-5">
+            <span>⭐⭐⭐⭐⭐ Google 4.9 分</span>
+            <span class="text-slate-600">｜</span>
+            <span class="flex items-center gap-1"><${Ic} n="Pin" c="w-3 h-3 text-blue-400" /> 新北新店門市 + 全台宅配</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-lg mx-auto text-left">
+            <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-3 text-xs text-slate-300 leading-relaxed">
+              ⭐⭐⭐⭐⭐ 「效能硬核玩家 · 阿傑：組完直接玩 4K，一格都沒掉！師傅超專業」
+            </div>
+            <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-3 text-xs text-slate-300 leading-relaxed">
+              ⭐⭐⭐⭐⭐ 「頂級創作者 · Cathy：PR 算圖快了三倍，當初猶豫好久現在超值得」
+            </div>
+          </div>
+        </div>`}
+ 
+      <!-- ════════════════ QUIZ ════════════════ -->
+      ${step === 'quiz' && html`
+        <${Card}>
+          <${Header} icon="Monitor" label="ARCHI PC Core" showHUD=${true} />
+          <div class="p-6 md:p-8 min-h-[480px] flex flex-col justify-center fu" key=${node}>
+            <div class="flex justify-between items-center mb-6">
+              ${hist.length > 0
+                ? html`<button onClick=${handleBack} disabled=${selIdx!==null}
+                    class="flex items-center text-xs text-slate-400 hover:text-white transition-colors disabled:opacity-40">
+                    <${Ic} n="ArrowL" c="w-4 h-4 mr-1" /> 返回上一題
+                  </button>`
+                : html`<div />`}
+              <div class="text-[10px] font-mono text-blue-400 bg-blue-900/30 px-3 py-1 rounded-full border border-blue-500/20">
+                NODE ${hist.length + 1}
+              </div>
+            </div>
+            <h2 class="text-xl md:text-2xl font-bold text-white mb-7 leading-relaxed">
+              ${QUIZ[node].q}
+            </h2>
+            <div class="space-y-3">
+              ${QUIZ[node].opts.map((opt, idx) => {
+                const isSel   = selIdx === idx;
+                const isOther = selIdx !== null && selIdx !== idx;
+                return html`
+                  <button key=${idx} onClick=${() => handleOpt(opt, idx)} disabled=${selIdx!==null}
+                    class=${'w-full text-left p-4 md:p-5 rounded-2xl border transition-all duration-300 flex items-center justify-between group relative overflow-hidden backdrop-blur-sm ' +
+                      (isSel   ? 'os bg-blue-600/90 border-blue-400 scale-[.98] shadow-[0_0_30px_rgba(59,130,246,.6)]' :
+                       isOther ? 'opacity-30 scale-[.95]' :
+                                 'bg-slate-800/60 border-slate-700 hover:bg-slate-700/80 hover:border-blue-500/50 hover:shadow-lg')}>
+                    <div class="ripple-bg" />
+                    <span class=${'relative z-10 text-base font-medium transition-colors pr-4 ' +
+                      (isSel ? 'text-white font-bold' : 'text-slate-300 group-hover:text-white')}>
+                      ${opt.t}
+                    </span>
+                    <div class=${'relative z-10 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ' +
+                      (isSel ? 'border-white' : 'border-slate-600 group-hover:border-blue-400')}>
+                      <div class=${'w-2 h-2 rounded-full transition-all ' +
+                        (isSel ? 'bg-white scale-100' : 'bg-blue-400 scale-0 group-hover:scale-50')} />
+                    </div>
+                  </button>`;
+              })}
+            </div>
+          </div>
+        </${Card}>`}
+ 
+      <!-- ════════════════ ANALYZING ════════════════ -->
+      ${step === 'analyzing' && html`
+        <${Card}>
+          <div class="p-8 min-h-[400px] flex flex-col items-center justify-center text-center font-mono">
+            <div class="relative mb-8">
+              <div class="absolute inset-0 bg-blue-500 blur-xl opacity-20 rounded-full animate-pulse"></div>
+              <${Ic} n="Spin" c="w-16 h-16 text-blue-400 animate-spin" />
+            </div>
+            ${lines.map((l, i) => html`
+              <div key=${i} class="text-blue-300 fu text-sm md:text-base mb-3">
+                <span class="text-blue-500 mr-2">▶</span>${l}
+              </div>`)}
+          </div>
+        </${Card}>`}
+ 
+      <!-- ════════════════ REPAIR RESULT ════════════════ -->
+      ${step === 'repair_done' && rep && html`
+        <${Card} border="border-orange-500/20">
+          <${Header} icon="Wrench" label="ARCHI PC 維修診斷" accent="text-orange-400" />
+          <div class="p-6 md:p-8">
+            <div class="text-center mb-5">
+              <div class="text-5xl mb-3">${rep.icon}</div>
+              <h2 class="text-2xl font-extrabold text-orange-400 mb-1">${rep.title}</h2>
+              <p class="text-slate-400 text-sm">初步診斷結果</p>
+            </div>
+            <div class="bg-slate-800/50 rounded-xl p-4 mb-4 text-slate-300 text-sm leading-relaxed">${rep.desc}</div>
+            <div class="bg-orange-500/10 border border-orange-500/30 rounded-xl p-3 mb-5 text-orange-300 text-sm font-medium text-center">🔧 ${rep.tip}</div>
+            <${CTABox} />
+            <button onClick=${handleBack}
+              class="w-full flex items-center justify-center gap-2 py-3 text-slate-400 hover:text-white border border-slate-700 rounded-xl transition-all text-sm">
+              <${Ic} n="ArrowL" c="w-4 h-4" /> 重新選擇問題
             </button>
-          )}
-
-          {modalContent && (
-            <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-in fade-in backdrop-blur-sm" data-html2canvas-ignore="true">
-              <div className="bg-slate-800 border border-blue-500/30 rounded-3xl p-6 max-w-sm w-full text-center shadow-[0_0_40px_rgba(59,130,246,0.2)] animate-in zoom-in-95">
-                <div className="flex justify-end mb-2">
-                  <button onClick={() => setModalContent(null)} className="text-slate-400 hover:text-white transition-colors bg-slate-700/50 p-2 rounded-full">
-                    <Icon name="X" className="w-4 h-4" />
-                  </button>
-                </div>
-                <h3 className="text-xl font-bold text-white mb-3">即將導向客服對話</h3>
-                <p className="text-slate-300 text-sm whitespace-pre-line mb-8 leading-relaxed">{modalContent}</p>
-                <button 
-                  onClick={() => setModalContent(null)} 
-                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)]"
-                >
-                  我知道了
-                </button>
+          </div>
+        </${Card}>`}
+ 
+      <!-- ════════════════ MAIN RESULT ════════════════ -->
+      ${step === 'result' && res && html`
+        <${Card}>
+          <${Header} icon="Monitor" label="ARCHI PC Core — 診斷完成" />
+          <div class="p-6 md:p-8">
+ 
+            <!-- ★ M-07: urgency banner -->
+            ${ugBanner && html`
+              <div class=${'mb-4 px-4 py-3 rounded-xl border text-sm font-medium ' + ugBanner.cls}>
+                ${ugBanner.txt}
+              </div>`}
+ 
+            <!-- Type badge + title -->
+            <div class="text-center mb-3">
+              <div class=${'inline-block px-4 py-1.5 rounded-full border text-sm font-bold mb-3 ' + res.bb}>
+                ${res.code}
+              </div>
+              <h2 class=${'text-2xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r ' + res.tc}>
+                ${res.title}
+              </h2>
+              <p class="text-slate-300 font-medium mt-2 text-sm">"${res.sub}"</p>
+            </div>
+ 
+            <${Img} url=${res.img} alt=${res.title} />
+ 
+            <!-- ★ M-05 Fix: "天生不對盤" replaced by "升級方向" (positive framing) -->
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 flex flex-col items-center text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-pink-600 to-rose-400"></div>
+                <${Ic} n="Heart" c="w-5 h-5 text-pink-500 mb-1.5" />
+                <span class="text-[10px] text-slate-400 font-bold mb-1 tracking-wider">🏆 最佳合夥人</span>
+                <span class="text-sm font-extrabold text-slate-100">${res.mate}</span>
+              </div>
+              <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 flex flex-col items-center text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-600 to-cyan-400"></div>
+                <${Ic} n="TrendUp" c="w-5 h-5 text-blue-400 mb-1.5" />
+                <span class="text-[10px] text-slate-400 font-bold mb-1 tracking-wider">🚀 你的升級方向</span>
+                <span class="text-sm font-extrabold text-slate-100">${res.upgrade}</span>
               </div>
             </div>
-          )}
-        </div>
-      );
-    }
-
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
-  </script>
+ 
+            <!-- Description -->
+            <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-4 mb-4 text-slate-300 text-sm leading-relaxed text-center">
+              ${res.desc}
+            </div>
+ 
+            <!-- ★ M-04 Fix: budget hint based on user's actual budget choice -->
+            ${bg && res.bh && res.bh[bg] && html`
+              <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 mb-4 text-blue-300 text-sm text-center">
+                <span class="font-bold">💡 你的預算建議：</span>${res.bh[bg]}
+              </div>`}
+ 
+            <!-- ★ S-07 Fix: differentiation from competitors -->
+            <div class="bg-slate-800/40 border border-slate-600/40 rounded-xl p-4 mb-5 text-xs text-slate-400 leading-relaxed">
+              <p class="font-bold text-slate-300 mb-2 text-sm">🔬 為什麼選 ARCHI PC？</p>
+              <p class="mb-1">• ${res.diff}</p>
+              <p class="mb-1">• 在地師傅面對面溝通需求，不是網路填單等回音</p>
+              <p>• 組裝後一年免費到府維修，買了不用擔心</p>
+            </div>
+ 
+            <${CTABox} />
+ 
+            <!-- ★ M-06 Fix: share incentive text added -->
+            <button onClick=${handleShare}
+              class="w-full flex items-center justify-center gap-2 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-colors border border-slate-700 text-sm font-medium">
+              <${Ic} n="Share" c="w-5 h-5" />
+              ${shareMsg || '🎁 複製連結分享給朋友（推薦好友享優惠）'}
+            </button>
+          </div>
+        </${Card}>`}
+ 
+      <!-- ════════════════ MODAL  ════════════════
+           ★ M-10 Fix: no forced countdown — user clicks when ready
+           ★ T-08 Fix: window.open instead of window.location.href
+      ════════════════════════════════════════ -->
+      ${modal && html`
+        <div class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 backdrop-blur-sm"
+          onClick=${e => { if (e.target === e.currentTarget) setModal(null); }}>
+          <div class="bg-slate-800 border border-blue-500/30 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl fu">
+            <div class="flex justify-end mb-2">
+              <button onClick=${() => setModal(null)} class="text-slate-400 hover:text-white bg-slate-700/50 p-2 rounded-full">
+                <${Ic} n="X" c="w-4 h-4" />
+              </button>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-3">即將前往客服</h3>
+            <div class="space-y-2 mb-6 text-sm text-slate-300 text-left bg-slate-900/50 rounded-xl p-4">
+              <p>${modal.copied ? '✅ 已自動複製「通關取件碼」到剪貼簿！' : '⚠️ 複製失敗，請手動記下診斷代碼再聯繫。'}</p>
+              <p>📋 進入聊天室後，請直接「貼上」文字並傳送。</p>
+              ${modal.platform === 'line' && !/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && html`
+                <p class="text-yellow-300 text-xs mt-1">💻 電腦版提示：若出現 QR Code，請用手機掃描，或允許「開啟 LINE 應用程式」</p>`}
+            </div>
+            <div class="flex gap-3">
+              <button onClick=${() => setModal(null)}
+                class="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-medium transition-all text-sm">
+                取消
+              </button>
+              <button onClick=${doRedirect}
+                class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg">
+                前往 ${modal.platform === 'line' ? 'LINE' : 'IG'} →
+              </button>
+            </div>
+          </div>
+        </div>`}
+ 
+      <!-- Restart floating button -->
+      ${(step === 'result' || step === 'repair_done') && html`
+        <button onClick=${startQuiz}
+          class="fixed bottom-6 right-6 bg-slate-800/90 backdrop-blur-md border border-slate-600 text-white px-5 py-3 rounded-full flex items-center hover:bg-slate-700 hover:scale-105 active:scale-95 transition-all z-50 font-bold shadow-xl">
+          <${Ic} n="Refresh" c="w-4 h-4 mr-2" /> 重新測驗
+        </button>`}
+    </div>`;
+}
+ 
+render(h(App, null), document.getElementById('root'));
+</script>
 </body>
 </html>
+ 
